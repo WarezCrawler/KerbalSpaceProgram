@@ -131,7 +131,7 @@ namespace GTI
                     currentModuleRCS = moduleRCS;
                     currentModuleRCSindex = i;
 
-                    // moduleIsEnabled lets it thrust (FixedUpdate gate); isEnabled shows its right-click UI.
+                    // moduleIsEnabled lets it thrust (the FixedUpdate gate); isEnabled shows its right-click UI.
                     moduleRCS.moduleIsEnabled = true;
                     moduleRCS.isEnabled = true;
                     // Carry the enabled/disabled state from the previous mode so a switch doesn't silently change it.
@@ -139,7 +139,10 @@ namespace GTI
                 }
                 else
                 {
-                    // Disable thrust (moduleIsEnabled) and hide the module's UI (isEnabled); rcsEnabled off for good measure.
+                    // Disable the unselected thruster. rcsEnabled=false stops it thrusting AND consuming fuel
+                    // (the FixedUpdate gate is "moduleIsEnabled && rcsEnabled"); moduleIsEnabled=false backs that
+                    // up and isEnabled=false hides its UI. Each mode uses its own runningEffectName (set in the
+                    // cfg), so the inactive module turning its own effect off can't interfere with the active one.
                     GTIDebug.Log("GTI_MultiModeRCS: Disable index " + i, iDebugLevel.High);
                     moduleRCS.rcsEnabled = false;
                     moduleRCS.moduleIsEnabled = false;

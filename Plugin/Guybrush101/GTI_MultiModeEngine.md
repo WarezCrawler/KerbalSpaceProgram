@@ -70,9 +70,22 @@ GTI_MultiModeRCS : GTI_MultiMode<MultiMode>
 Targets the part's `List<ModuleRCS>`. Since `ModuleRCS` has no `engineID`, **modes are matched by
 order** — mode *i* drives the *i*-th `ModuleRCS` on the part. On a switch, the selected module is
 enabled (`moduleIsEnabled` + `isEnabled` = true, so it thrusts and shows its right-click UI) and
-every other module is fully disabled (`moduleIsEnabled`/`isEnabled`/`rcsEnabled` = false). The
-previous mode's enabled/disabled state is carried to the new one. The stock per-thruster
-`ToggleAction` is hidden so this module is the single control point.
+every other module is disabled (`rcsEnabled`/`moduleIsEnabled`/`isEnabled` = false). `rcsEnabled =
+false` is the key one — it's the stock toggle's flag, and the thruster's `FixedUpdate` gate is
+`moduleIsEnabled && rcsEnabled`, so clearing it stops the inactive thruster from thrusting **and
+from consuming fuel**. The previous mode's enabled/disabled state is carried to the new one, and the
+stock per-thruster `ToggleAction` is hidden so this module is the single control point.
+
+> **Each mode must use its own `runningEffectName`** (the demo patch gives the LiquidFuel mode a
+> `running_lf` effect). Every `ModuleRCSFX` runs `FixedUpdate` each frame and the inactive one calls
+> `part.Effect(runningEffectName, 0)`; if two modes shared an effect, the one declared last would
+> zero it every frame and the other's jet would never appear. (Same reason each stock engine mode
+> uses a distinct effect name.)
+>
+> **Symmetry:** flight switching of symmetric blocks is handled by the base class wiring
+> `onSymmetryFieldChanged` (KSP otherwise copies the value to counterparts without running their
+> switch, leaving them on the old mode). So all symmetric blocks change together — set
+> `affectSymCounterpartsInFlight = true`.
 
 ### Config-specific field
 
