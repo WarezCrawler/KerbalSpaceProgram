@@ -11,13 +11,19 @@ using UnityEngine;
 
 namespace GTI
 {
-    //Engine Type
+    /// <summary>
+    /// Per-mode engine data for the original "hard-coded" multi-mode design: one ModuleEngines whose
+    /// propellants, thrust and curves get rewritten per selected mode. Consumed by the GTI_MultiModeEngine
+    /// PartModule kept commented out further down (the reference for that first-attempt approach).
+    /// Most setters take raw cfg strings and parse/cache them.
+    /// </summary>
     public class MultiModeEngine : IMultiMode
     {
         public int moduleIndex { get; set; }
         public string ID { get; set; }
         public string Name { get; set; }
 
+        // Comma-separated propellant names; the setter caches the split array for fast access.
         //public string propellants { get; set; }
         private string _propellants;
         private string[] _propellantsArray;
@@ -34,7 +40,8 @@ namespace GTI
 
         private string _propRatios;
         private string[] _propRatiosArray;
-        //For storing and retrieving propellant ratios
+        // Comma-separated propellant ratios (parallel to propellants). The setter caches the split array and
+        // warns on any entry that doesn't parse as a number, so cfg typos surface early.
         public string propRatios
         {
             get => _propRatios;
@@ -72,6 +79,8 @@ namespace GTI
 
         public string propIgnoreForISP { get; set; }
         public string propDrawGauge { get; set; }
+
+        // Resource flow mode. The setter whitelists the valid KSP values; anything else falls back to empty.
         private string _resourceFlowMode;
         public string resourceFlowMode
         {
@@ -113,6 +122,7 @@ namespace GTI
                 }
             }
         }
+        // maxThrust holds the value; SetMaxThrust is a string-input helper that parses it straight from cfg.
         public float maxThrust { get; set; }
         public string SetMaxThrust
         {
@@ -122,6 +132,7 @@ namespace GTI
                 maxThrust = outMaxThrust;
             }
         }
+        // Raw cfg passthrough values, applied to the engine by the PartModule when a mode is selected.
         public string heatProduction { get; set; }
         public string engineType { get; set; }
         public string atmChangeFlow { get; set; }
@@ -129,6 +140,7 @@ namespace GTI
         public string engineAccelerationSpeed { get; set; }
         public string engineDecelerationSpeed { get; set; }
 
+        // ISP-vs-atmosphere curve. Setting the ConfigNode also loads it into a ready-to-evaluate FloatCurve.
         private ConfigNode _atmosphereCurve = new ConfigNode();
         public FloatCurve atmosphereFloatCurve { get; private set; } = new FloatCurve();
         public ConfigNode atmosphereCurve
@@ -145,11 +157,14 @@ namespace GTI
                 }
             }
         }
+        // Velocity- and atmosphere-curve nodes (jet-style engines), applied to the engine on mode select.
         public string useVelCurve { get; set; }
         public ConfigNode velCurve { get; set; }
         public string useAtmCurve { get; set; }
         public ConfigNode atmCurve { get; set; }
 
+        // Optional custom throttle-vs-ISP curve (the feature that scales ISP with throttle). Setting the node
+        // loads its FloatCurve; a null node clears it.
         public bool useGTIthrottleISPCurve { get; set; } = false;
         private ConfigNode _GTIthrottleISPCurve = new ConfigNode();
         public FloatCurve GTIthrottleISPFloatCurve { get; private set; } = new FloatCurve();
