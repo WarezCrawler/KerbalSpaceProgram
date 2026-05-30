@@ -33,8 +33,33 @@ re-ignites the newly selected engine if the previous one was running. Stock engi
 |-------|---------|
 | `engineID` | Semicolon-separated list of `ModuleEnginesFX.engineID`s, one per mode |
 | `GUIengineID` | Semicolon-separated display names, parallel to `engineID` |
+| `engineID_onFlameout` | Optional. Semicolon-separated list parallel to `engineID`: the mode to auto-switch **to** when that mode's engine flames out. Omit for no auto-switch. |
+| `autoSwitchEnabled` | Persistent on/off toggle for auto-switch (default on). Only shown when `engineID_onFlameout` is set. |
 
 Plus the shared `GTI_MultiMode<T>` fields — see [GTI_Utilities.md](GTI_Utilities.md).
+
+### Auto-switch on flameout
+
+When `engineID_onFlameout` is supplied, the module watches the active engine each frame; if it
+flames out, it switches to that mode's mapped fallback and re-ignites it — the generalisation of
+stock `MultiModeEngine`'s air-breathing→closed-cycle behaviour to N modes.
+
+- The list is **parallel to `engineID`**: entry *i* is the mode to jump to when mode *i* flames out.
+- A mode that **maps to itself** (or names an unknown engineID) does **not** switch — it just flames
+  out as normal. This is also the behaviour when `engineID_onFlameout` is omitted entirely.
+- A switch only happens if the **target engine can actually start** (`CanStart()` — i.e. has
+  propellant/conditions), so it won't flip to a mode that is also dead.
+- Chains (`A→B→C`) and bidirectional maps (`A↔B`, e.g. relight air-breathing on descent) are both
+  expressible.
+- The player can disable it in flight via the **Auto-switch on flameout** toggle.
+
+Example — air-breathing falls back to closed-cycle, closed-cycle stays put:
+```
+engineID            = AirBreathing;ClosedCycle
+engineID_onFlameout = ClosedCycle;ClosedCycle
+//                    ^AirBreathing flames out -> ClosedCycle
+//                                 ^ClosedCycle maps to itself -> no switch (plain flameout)
+```
 
 ### Actions
 
@@ -51,6 +76,7 @@ MODULE
     name = GTI_MultiModeEngineFX
     engineID = airBreathing;closedCycle
     GUIengineID = Air-Breathing;Closed Cycle
+    engineID_onFlameout = closedCycle;closedCycle   // optional: air-breathing falls back to closed-cycle
     availableInFlight = true
     // ... one ModuleEnginesFX MODULE per engineID listed above
 }

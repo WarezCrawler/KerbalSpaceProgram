@@ -37,9 +37,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\_Ref_Modules\KSP_Current_DLL\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="GTI_Utilities">
-      <HintPath>..\GTI_Utilities\bin\Release\GTI_Utilities.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\GTI_Utilities\GTI_Utilities.csproj">
+      <Project>{204CE34A-D836-4C53-A3EC-5D74DB3F8CB9}</Project>
+      <Name>GTI_Utilities</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <Reference Include="System" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -55,8 +57,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName).dll" "T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins\$(TargetName).dll"
-::copy /Y "$(TargetDir)$(TargetName).dll" "S:\Steam\SteamApps\common\Kerbal Space Program\GameData\GTI_Utilities\Plugins\$(TargetName).dll"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(TargetPath)" "$(GTIDeployDir)\$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

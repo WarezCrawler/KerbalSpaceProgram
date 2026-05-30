@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Shared build settings for every GTI plugin project in this folder.
+    MSBuild auto-imports the nearest Directory.Build.props, so each .csproj inherits these
+    without referencing them.
+
+    GTIDeployDir is the single source of truth for where built DLLs (and GTI_Config.cfg) are
+    copied after a build. Change this one line to retarget every project to a different KSP install.
+  -->
+  <PropertyGroup>
+    <GTIDeployDir>T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins</GTIDeployDir>
+  </PropertyGroup>
+</Project>

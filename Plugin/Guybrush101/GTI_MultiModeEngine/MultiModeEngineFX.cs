@@ -20,8 +20,23 @@ namespace GTI
         [KSPField]
         public string GUIengineID = string.Empty;
 
+        // Optional semicolon-separated list, parallel to engineID: the mode to auto-switch to when that
+        // mode's engine flames out. A mode mapping to itself (or omitted/unmatched) means "no switch" - i.e.
+        // a plain flameout, the behaviour when this field is absent. Empty = auto-switch feature off.
+        [KSPField]
+        public string engineID_onFlameout = string.Empty;
+
+        // Player toggle for auto-switch; only shown when engineID_onFlameout is configured (see initializeGUI).
+        [KSPField(isPersistant = true, guiActive = true, guiActiveEditor = true, guiName = "Auto-switch on flameout")]
+        [UI_Toggle(enabledText = "On", disabledText = "Off")]
+        public bool autoSwitchEnabled = true;
+
         // True when GUIengineID was not supplied, so the raw engineID is used as the display name.
         private bool GUIengineIDEmpty = true;
+
+        // Per-mode auto-switch target (index into modes), built from engineID_onFlameout.
+        // null when the feature is not configured for this part.
+        private int[] onFlameoutTarget;
 
         // The ModuleEnginesFX instances on this part, located once during initialization.
         protected List<ModuleEnginesFX> ModuleEngines;
@@ -56,6 +71,28 @@ namespace GTI
                         ID = arrEngineID[i],
                         Name = GUIengineIDEmpty ? arrEngineID[i] : arrGUIengineID[i]
                     });
+                }
+
+                // Parse the optional flameout-target list (parallel to engineID). Each entry is resolved to a
+                // mode index; an entry that names no engineID, or names its own mode, means "no switch".
+                bool flameoutEmpty = ArraySplitEvaluate(engineID_onFlameout, out string[] arrFlameout, ';');
+                if (!flameoutEmpty)
+                {
+                    if (arrFlameout.Length != arrEngineID.Length)
+                        throw new Exception("GTI_MultiModeEngineFX: engineID_onFlameout has " + arrFlameout.Length + " entries but engineID has " + arrEngineID.Length + " on part '" + part?.name + "'. The two lists must be the same length.");
+
+                    onFlameoutTarget = new int[modes.Count];
+                    for (int i = 0; i < modes.Count; i++)
+                    {
+                        int targetIndex = i;   // default: map to self => no switch (plain flameout)
+                        for (int j = 0; j < modes.Count; j++)
+                        {
+                            if (modes[j].ID == arrFlameout[i]) { targetIndex = j; break; }
+                        }
+                        if (targetIndex == i && modes[i].ID != arrFlameout[i])
+                            GTIDebug.LogWarning("GTI_MultiModeEngineFX: engineID_onFlameout entry '" + arrFlameout[i] + "' matched no engineID; mode '" + modes[i].ID + "' will not auto-switch.", iDebugLevel.Low);
+                        onFlameoutTarget[i] = targetIndex;
+                    }
                 }
 
                 // Grab the engine modules on the part. Single lookup, reused for the part's lifetime.
@@ -134,6 +171,45 @@ namespace GTI
         }
 
         /// <summary>
+        /// Auto-switch on flameout. If the active engine flames out, jump to its mapped fallback mode
+        /// (engineID_onFlameout) - but only if that target engine can actually start, so we don't flip to
+        /// a mode that is also dead. A mode mapped to itself is a no-op (ordinary flameout). The whole
+        /// feature is off unless engineID_onFlameout is configured and the player toggle is on.
+        /// </summary>
+        public override void OnUpdate()
+        {
+            base.OnUpdate();
+
+            if (onFlameoutTarget == null || !autoSwitchEnabled) return;
+            if (!HighLogic.LoadedSceneIsFlight) return;
+            if (currentModuleEngine == null || !currentModuleEngine.flameout) return;
+
+            int target = onFlameoutTarget[selectedMode];
+            if (target == selectedMode) return;   // maps to itself -> plain flameout, nothing to do
+
+            // Don't switch to a mode that can't run either (e.g. no propellant) - avoids a pointless flip.
+            if (!ModuleEngines[modes[target].moduleIndex].CanStart()) return;
+
+            GTIDebug.Log("Auto-switch on flameout: " + modes[selectedMode].ID + " -> " + modes[target].ID, iDebugLevel.Medium);
+            AutoSwitchToMode(target);
+        }
+
+        /// <summary>
+        /// Switches to the given mode in response to a flameout and makes sure the new engine fires
+        /// (the old one flamed out under throttle, so the player still wants thrust).
+        /// </summary>
+        private void AutoSwitchToMode(int target)
+        {
+            selectedMode = target;
+            ChooseOption = modes[target].ID;
+            updateMultiMode();
+
+            if (currentModuleEngine != null && !currentModuleEngine.getIgnitionState)
+                currentModuleEngine.Activate();
+            currentEngineState = currentModuleEngine != null && currentModuleEngine.getIgnitionState;
+        }
+
+        /// <summary>
         /// After the base class builds the selector UI, resolve currentModuleEngine from the persisted
         /// selection so the action handlers have a valid engine before the first manual switch.
         /// </summary>
@@ -148,6 +224,11 @@ namespace GTI
             {
                 if (ModuleEngines[i].engineID == ChooseOption) currentModuleEngine = ModuleEngines[i];
             }
+
+            // Only expose the auto-switch toggle when the feature is actually configured for this part.
+            bool autoSwitchConfigured = onFlameoutTarget != null;
+            Fields[nameof(autoSwitchEnabled)].guiActive = autoSwitchConfigured;
+            Fields[nameof(autoSwitchEnabled)].guiActiveEditor = autoSwitchConfigured;
         }
 
         /// <summary>
