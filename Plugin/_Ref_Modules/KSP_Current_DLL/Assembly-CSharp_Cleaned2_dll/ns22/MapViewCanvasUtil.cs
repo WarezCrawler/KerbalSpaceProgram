@@ -1,0 +1,121 @@
+using UnityEngine;
+using UnityEngine.UI;
+using ns2;
+
+namespace ns22;
+
+public class MapViewCanvasUtil : MonoBehaviour
+{
+	private static Transform nodeCanvasContainer;
+
+	private static bool nodeCanvasContainerSetup;
+
+	private static Camera canvasCamera;
+
+	private static Canvas mapViewCanvas;
+
+	private static RectTransform mapViewCanvasRect;
+
+	public static Transform NodeContainer => GetNodeCanvasContainer();
+
+	public static Camera CanvasCamera
+	{
+		get
+		{
+			if (canvasCamera == null)
+			{
+				canvasCamera = UIMasterController.Instance.uiCamera;
+			}
+			return canvasCamera;
+		}
+	}
+
+	public static Canvas MapViewCanvas
+	{
+		get
+		{
+			if (mapViewCanvas == null)
+			{
+				mapViewCanvas = UIMasterController.Instance.mainCanvas;
+			}
+			return mapViewCanvas;
+		}
+	}
+
+	public static RectTransform MapViewCanvasRect
+	{
+		get
+		{
+			if (mapViewCanvasRect == null)
+			{
+				mapViewCanvasRect = MapViewCanvas.GetComponent<RectTransform>();
+			}
+			return mapViewCanvasRect;
+		}
+	}
+
+	public static Vector3 ScaledToUISpacePos(Vector3d scaledSpacePos, ref bool zPositive, float zFlattenEasing, float zFlattenMidPoint, float zUIstart, float zUIlength)
+	{
+		zPositive = PlanetariumCamera.fetch.transform.InverseTransformPoint(scaledSpacePos).z > 0f;
+		Vector3 result = PlanetariumCamera.Camera.WorldToViewportPoint(scaledSpacePos);
+		result.x = result.x * MapViewCanvasRect.sizeDelta.x - MapViewCanvasRect.sizeDelta.x * 0.5f;
+		result.y = result.y * MapViewCanvasRect.sizeDelta.y - MapViewCanvasRect.sizeDelta.y * 0.5f;
+		result *= UIMasterController.Instance.uiScale;
+		if (zFlattenEasing == 0f)
+		{
+			result.z = 0f;
+		}
+		else
+		{
+			result.z = (float)UtilMath.Flatten(result.z, zFlattenMidPoint, zFlattenEasing) * zUIlength + zUIstart;
+		}
+		return result;
+	}
+
+	public static Vector3 ScaledToUISpacePos(Vector3d scaledSpacePos, RectTransform uiSpace, Camera uiCamera, ref bool zPositive, float zFlattenEasing, float zFlattenMidPoint, float zUIstart, float zUIlength)
+	{
+		zPositive = uiCamera.transform.InverseTransformPoint(scaledSpacePos).z > 0f;
+		Vector3 result = uiCamera.WorldToViewportPoint(scaledSpacePos);
+		result.x = result.x * uiSpace.sizeDelta.x - uiSpace.sizeDelta.x * 0.5f;
+		result.y = result.y * uiSpace.sizeDelta.y - uiSpace.sizeDelta.y * 0.5f;
+		if (zFlattenEasing == 0f)
+		{
+			result.z = 0f;
+		}
+		else
+		{
+			result.z = (float)UtilMath.Flatten(result.z, zFlattenMidPoint, zFlattenEasing) * zUIlength + zUIstart;
+		}
+		return result;
+	}
+
+	public static Transform GetNodeCanvasContainer()
+	{
+		if (nodeCanvasContainer == null)
+		{
+			GameObject obj = new GameObject("nodeCanvasContainer");
+			obj.AddComponent<Canvas>();
+			obj.AddComponent<GraphicRaycaster>();
+			obj.layer = LayerMask.NameToLayer("UI");
+			nodeCanvasContainer = obj.transform;
+		}
+		if (!nodeCanvasContainerSetup && UIMasterController.Instance != null)
+		{
+			nodeCanvasContainer.transform.NestToParent(UIMasterController.Instance.mainCanvas.transform, resetParent: true);
+			nodeCanvasContainer.transform.SetAsFirstSibling();
+			nodeCanvasContainerSetup = true;
+		}
+		return nodeCanvasContainer;
+	}
+
+	public static Transform ResetNodeCanvasContainer()
+	{
+		OnUIScaleChange();
+		return GetNodeCanvasContainer();
+	}
+
+	internal static void OnUIScaleChange()
+	{
+		nodeCanvasContainerSetup = false;
+	}
+}

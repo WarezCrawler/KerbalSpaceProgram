@@ -1,0 +1,19 @@
+public enum ConstructionEventType
+{
+	Unknown,
+	PartCreated,
+	PartDropped,
+	PartPicked,
+	PartDragging,
+	PartAttached,
+	PartDetached,
+	PartDeleted,
+	PartCopied,
+	PartRootSelected,
+	PartOffsetting,
+	PartOffset,
+	PartRotating,
+	PartRotated,
+	PartTweaked,
+	PartSymmetryDeleted
+}
