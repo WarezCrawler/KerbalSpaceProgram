@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using UnityEngine;
 using static GTI.GTIConfig;
 
@@ -45,9 +46,18 @@ namespace GTI.Events
         private EventData<float, float> onThrottleChangeEvent;
         //private EventData<GameScenes> onSceneChange;
         public static bool EventDetectorRunning = false;
-        //private bool initEvent;
-        //private ConfigNode EventConfig;
-        //private static Vessel CurrentVessel;
+
+        // Thread-safe hand-off: the worker thread enqueues throttle changes; the main-thread consumer
+        // coroutine drains it and fires the event, so subscribers run on the main thread.
+        private readonly ConcurrentQueue<ThrottleChange> _throttleChanges = new ConcurrentQueue<ThrottleChange>();
+        // How often the main-thread consumer wakes to apply the newest change. Low cadence = low cost. Tunable.
+        private const float _consumeInterval = 0.1f;   // seconds (~10x per second)
+        private struct ThrottleChange
+        {
+            public float current;
+            public float previous;
+            public ThrottleChange(float current, float previous) { this.current = current; this.previous = previous; }
+        }
 
         private void Awake()
         {
@@ -58,25 +68,6 @@ namespace GTI.Events
             #region Events
             GTIDebug.Log("GTI_Events find onthrottleChangeEvent on Awake()", iDebugLevel.DebugInfo);
             onThrottleChangeEvent = GameEvents.FindEvent<EventData<float, float>>("onThrottleChange");
-
-            #region previous subscription to event and debugging
-            //if (onThrottleChangeEvent != null)
-            //{
-            //    Debug.Log("[GTI] Adding GTI (debug) to onThrottleChange");
-            //    onThrottleChangeEvent.Add(EventDebugger);
-            //}
-            //else Destroy(this.gameObject);
-
-
-            //onSceneChange = GameEvents.FindEvent<EventData<GameScenes>>("onGameSceneLoadRequested");
-            //if (onSceneChange != null)
-            //{
-            //    Debug.Log("Adding GTI to onGameSceneLoadRequested");
-            //    onSceneChange.Add(onEventSceneChange);
-            //}
-
-            //Thread EventThread = new Thread(() => UpdateEvent());
-            #endregion
 
             //Starting the thread which will continuously check and raise the Throttle Event if interaction was detected
             startThread();
@@ -110,56 +101,18 @@ namespace GTI.Events
             {
                 if (!EventDetectorRunning)
                 {
-                    Thread EventThread = new Thread(() =>
-                    {
-                        //StartCoroutine(UpdateEvent());
-                        EventDetectorRunning = true;
-                        GTI_inFlightEventDetector();
-                    });
+                    // Set on the main thread before launching so the consumer coroutine's loop guard is valid.
+                    EventDetectorRunning = true;
+
+                    Thread EventThread = new Thread(() => GTI_inFlightEventDetector());
                     GTIDebug.Log("Starting GTI Event thread", iDebugLevel.High);
-                    EventThread.Priority = System.Threading.ThreadPriority.BelowNormal;     //new 16/2-2017
-                    GTIDebug.Log("GTI_inFlightEventDetector Started in new thread", iDebugLevel.DebugInfo);
+                    EventThread.Priority = System.Threading.ThreadPriority.BelowNormal;
                     EventThread.IsBackground = true;
-                    EventThread.Start(); 
-                    return;
-                }
-                else GTIDebug.Log("GTI onThrottle event detector allready runnning. New Activation Cancelled.", iDebugLevel.Low);
-            }
-            else
-            {
-                GTIDebug.Log("The GTI Event 'onThrottleChange' deactivated. initEvent was set to 'false'", iDebugLevel.Low);
-                Destroy(this.gameObject);
-            }
-        }
+                    EventThread.Start();
 
-        public static Task EventTask;
-        internal void startThread_v2()
-        {
-            if (GTIConfig.Event.initialize)
-            {
-                GTIDebug.Log("GTI Event thread status " + EventTask.Status, iDebugLevel.High);
+                    // Drain the queue on the main thread (coroutine, not Update/FixedUpdate).
+                    StartCoroutine(ConsumeThrottleChanges());
 
-                //Check if the task has stopped
-                if (EventTask.Status != TaskStatus.Running || EventTask.Status != TaskStatus.WaitingForActivation || EventTask.Status != TaskStatus.WaitingForChildrenToComplete || EventTask.Status != TaskStatus.WaitingToRun)
-                {
-                    EventDetectorRunning = false;
-                    Thread.Sleep(1000); //Wait 1 sec to allow the thread to stop before reactivating
-                }
-
-                //force the tread to stop????!!!
-
-                if (!EventDetectorRunning)
-                {
-                    EventTask =
-                    (
-                        Task.Factory.StartNew(() =>
-                        {
-                            //StartCoroutine(UpdateEvent());
-                            EventDetectorRunning = true;
-                            GTI_inFlightEventDetector();
-                        })
-                    );
-                    GTIDebug.Log("Starting GTI Event thread", iDebugLevel.High);
                     GTIDebug.Log("GTI_inFlightEventDetector Started in new thread", iDebugLevel.DebugInfo);
                     return;
                 }
@@ -171,6 +124,7 @@ namespace GTI.Events
                 Destroy(this.gameObject);
             }
         }
+
         private void GTI_inFlightEventDetector()        //For threaded execution --> Detects the basis for event
         {
             int wait = GTIConfig.Event.CheckFreqIdle;
@@ -183,22 +137,16 @@ namespace GTI.Events
             GTIDebug.LogAppend(iDebugLevel.Medium, "Event thread GTI_inFlightEventDetector started\n\tEventCheckFreqIdle: ", GTIConfig.Event.CheckFreqIdle.ToString(), "\n\tEventCheckFreqActive: ", GTIConfig.Event.CheckFreqActive.ToString());
             while (EventDetectorRunning)
             {
-                if (savedThrottle != FlightInputHandler.state.mainThrottle)
+                float throttle = FlightInputHandler.state.mainThrottle;
+                if (savedThrottle != throttle)
                 {
-                    //if (FlightGlobals.ActiveVessel != null)     //Are any vessel active
-                    //{
-                    //    //CurrentVessel = FlightGlobals.ActiveVessel;
-                    //}
-                    //run code on throttle change here.
-                    onThrottleChangeEvent.Fire(FlightInputHandler.state.mainThrottle, savedThrottle);
-                    savedThrottle = FlightInputHandler.state.mainThrottle;
-                    //##GTIDebug.Log("Throttle Changed to " + savedThrottle, iDebugLevel.DebugInfo);
-                    //onThrottleChangeEvent.Fire();
+                    // Hand the change to the main-thread consumer - do NOT Fire() or touch KSP objects here.
+                    _throttleChanges.Enqueue(new ThrottleChange(throttle, savedThrottle));
+                    savedThrottle = throttle;
                     wait = GTIConfig.Event.CheckFreqActive;
                 }
                 else { wait = GTIConfig.Event.CheckFreqIdle; }
 
-                //if (!HighLogic.LoadedSceneIsFlight) EventDetectorRunning = false;
                 Thread.Sleep(wait);
             }
 
@@ -208,74 +156,28 @@ namespace GTI.Events
             GTIDebug.Log("GTI_inFlightEventDetector Stopped.\tRuntime = " + elapsedTime, iDebugLevel.Medium);
         }
 
-        #region Update()
-        //deprecated --> Only runs in the primary thread for some reason.
-        //private IEnumerator UpdateEvent()
-        //{
-        //    float wait = 0.2f;
-        //    //System.Diagnostics.Stopwatch stopwatch;
+        /// <summary>
+        /// Main-thread consumer. Wakes at a low fixed cadence (not every frame), coalesces the queued
+        /// throttle changes down to the newest, and fires onThrottleChange there - so every subscriber
+        /// runs on the main thread where touching KSP/Unity objects is safe.
+        /// </summary>
+        private IEnumerator ConsumeThrottleChanges()
+        {
+            // Cached once to avoid per-iteration allocation (GC).
+            WaitForSeconds wait = new WaitForSeconds(_consumeInterval);
+            while (EventDetectorRunning)
+            {
+                bool any = false;
+                ThrottleChange latest = default(ThrottleChange);
+                // Coalesce: drain everything queued since last wake, keep only the newest.
+                while (_throttleChanges.TryDequeue(out ThrottleChange change)) { latest = change; any = true; }
+                if (any) onThrottleChangeEvent?.Fire(latest.current, latest.previous);
+                yield return wait;
+            }
+        }
 
-        //    Debug.Log("GTI Event thread UpdateEvent() started");
-        //    while (true)
-        //    {
-        //        if (savedThrottle != FlightInputHandler.state.mainThrottle)
-        //        {
-        //            //run code on throttle change here.
-        //            savedThrottle = FlightInputHandler.state.mainThrottle;
-        //            //Debug.Log("Throttle Changed to " + savedThrottle);
-        //            onThrottleChangeEvent.Fire();
-        //            wait = 0.01f;
-        //        }
-        //        //Debug.Log("UpdateEvent() --> WaitForSeconds " + wait);
-        //        Debug.Log("Before loop" + Time.time);
-        //        for (int i = 0; i < 1000000000; i++)
-        //        {
-        //            int a = 5;
-        //            a = a + 5;
-        //            //do nothing
-        //        }
-        //        Debug.Log("After loop" + Time.time);
-        //        yield return new WaitForSeconds(wait);
-        //    }
-        //}
-
-
-        //public void Update()
-        //{
-        //    //Debug.Log("GTI Event Update() started");
-
-        //    if (HighLogic.LoadedSceneIsFlight)
-        //    {
-        //        if (savedThrottle != FlightInputHandler.state.mainThrottle)
-        //        {
-        //            //run code on throttle change here.
-        //            savedThrottle = FlightInputHandler.state.mainThrottle;
-        //            Debug.Log("Throttle Changed to " + savedThrottle);
-        //            if (onThrottleChangeEvent != null)
-        //            {
-        //                Debug.Log("Fire Event 'onThrottleChange'");
-        //                onThrottleChangeEvent.Fire();
-        //            }
-        //        }
-        //    }
-        //}
-        #endregion
 
         #region Event Call functions
-        ///// <summary>
-        ///// Start event detection if scene is changed to Flight
-        ///// </summary>
-        ///// <param name="newScene"></param>
-        //public void onEventSceneChange(GameScenes newScene = GameScenes.FLIGHT)
-        //{
-        //    Debug.Log("SceneChange detected --> Trying to restart GTI onThrottle");
-        //    if (newScene == GameScenes.FLIGHT)
-        //    {
-        //        Debug.Log("Restarting thread for event detection of GTI onThrottle");
-        //        startThread();
-        //    }
-        //    else EventDetectorRunning = false;
-        //}
 
         private void EventDebugger(float newThrottle, float OrigThrottle)
         {
@@ -291,26 +193,5 @@ namespace GTI.Events
                 onThrottleChangeEvent.Remove(EventDebugger);
             //onSceneChange.Remove(onEventSceneChange);
         }
-
-        //private ConfigNode GetConfigurationsCFG()
-        //{
-        //    ConfigNode node;
-        //    try
-        //    {
-        //        //node = ConfigNode.Load(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/GTI_Config.cfg");
-        //        //node = GTIConfig.GTIConfigurationNode;
-
-        //        //Debug.Log("GTI ConfigNode\n" + node.ToString());
-        //        node = GTIConfig.GTIConfigurationNode.GetNode("EventConfig");
-        //        //Debug.Log("GTI ConfigNode\n" + node.ToString());
-        //    }
-        //    catch
-        //    {
-        //        Debug.LogError("[GTI] " + Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/GTI_Config.cfg NOT FOUND");
-        //        node = new ConfigNode();
-        //    }
-
-        //    return node;
-        //}
     }
 }
