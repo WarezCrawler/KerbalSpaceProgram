@@ -135,7 +135,7 @@ namespace GTI
             writeScreenMessage();
 
             if (ModuleEngines == null)
-                GTIDebug.Log("updateMultiMode() --> ModuleEngines is null", iDebugLevel.Low);
+                throw new Exception("GTI_MultiModeEngineFX.updateMultiMode(): ModuleEngines list is null on part '" + part?.name + "' - initializeSettings() did not run before updateMultiMode().");
 
             foreach (ModuleEnginesFX moduleEngine in ModuleEngines)
             {
@@ -194,9 +194,19 @@ namespace GTI
                 );
         }
 
+        /// <summary>
+        /// Fail fast with a descriptive message if no engine is currently selected (indicates a bug or a bad cfg).
+        /// </summary>
+        private void EnsureCurrentEngine()
+        {
+            if (currentModuleEngine == null)
+                throw new Exception("GTI_MultiModeEngineFX: currentModuleEngine is null on part '" + part?.name + "' - ChooseOption '" + ChooseOption + "' matched no ModuleEnginesFX.");
+        }
+
         [KSPAction("Activate Engine")]
         public void ActionActivate(KSPActionParam param)
         {
+            EnsureCurrentEngine();
             if (!currentModuleEngine.getIgnitionState) { currentModuleEngine.Activate(); }
 
             currentEngineState = currentModuleEngine.getIgnitionState;
@@ -205,6 +215,7 @@ namespace GTI
         [KSPAction("Shutdown Engine")]
         public void ActionShutdown(KSPActionParam param)
         {
+            EnsureCurrentEngine();
             if (currentModuleEngine.getIgnitionState) { currentModuleEngine.Shutdown(); }
 
             currentEngineState = currentModuleEngine.getIgnitionState;
@@ -213,7 +224,7 @@ namespace GTI
         [KSPAction("Toggle Engine")]
         public void ActionToggle(KSPActionParam param)
         {
-
+            EnsureCurrentEngine();
             if (currentModuleEngine.getIgnitionState)
             {
                 currentModuleEngine.Shutdown();
