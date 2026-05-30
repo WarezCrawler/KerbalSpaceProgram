@@ -13,7 +13,7 @@ air-breathing/closed-cycle multi-mode engine — preserving ignition state acros
 ## Source files
 
 - `MultiModeEngineFX.cs` — main module (`GTI_MultiModeEngineFX`).
-- `MultiModeRCS.cs` — `GTI_MultiModeRCS` (**incomplete** — throws `NotImplementedException`).
+- `MultiModeRCS.cs` — `GTI_MultiModeRCS` (switchable `ModuleRCS`; see its section below).
 - `MultiModeEngine.cs` — engine mode data class (incomplete).
 - `DEBUG.cs` — debug helpers (not compiled).
 
@@ -58,7 +58,45 @@ MODULE
 
 Used in GTIndustries by the CR-13 R.A.P.T.O.R. and NRX "KINKI" engines.
 
-## GTI_MultiModeRCS (incomplete)
+## GTI_MultiModeRCS
 
-Intended `ModuleRCS` equivalent. Fields `RCSID` / `GUIRCSID` mirror the engine pattern, but the
-implementation is unfinished — do not use in production configs.
+The RCS counterpart of `GTI_MultiModeEngineFX`: switches a part between several stock `ModuleRCS`
+thrusters, keeping exactly one enabled at a time.
+
+```
+GTI_MultiModeRCS : GTI_MultiMode<MultiMode>
+```
+
+Targets the part's `List<ModuleRCS>`. Since `ModuleRCS` has no `engineID`, **modes are matched by
+order** — mode *i* drives the *i*-th `ModuleRCS` on the part. On a switch, the selected module is
+enabled (`moduleIsEnabled` + `isEnabled` = true, so it thrusts and shows its right-click UI) and
+every other module is fully disabled (`moduleIsEnabled`/`isEnabled`/`rcsEnabled` = false). The
+previous mode's enabled/disabled state is carried to the new one. The stock per-thruster
+`ToggleAction` is hidden so this module is the single control point.
+
+### Config-specific field
+
+| Field | Meaning |
+|-------|---------|
+| `GUIRCSID` | Optional semicolon-separated display names, one per `ModuleRCS`. Defaults to each thruster's `resourceName`. |
+| `RCSID` | Reserved/unused — kept for symmetry with the engine module; RCS has no per-module id. |
+
+Plus the shared `GTI_MultiMode<T>` fields — see [GTI_Utilities.md](GTI_Utilities.md).
+
+### Actions
+
+- `ActionActivate` ("Enable RCS"), `ActionShutdown` ("Disable RCS"), `ActionToggle` ("Toggle RCS")
+  — act on the currently selected thruster's `rcsEnabled`.
+- Inherited: `MultiModeAction_1…12`, `ActionNextMode`, `ActionPreviousMode`, `EVAChangeMode`.
+
+### .cfg pattern
+
+```
+MODULE
+{
+    name = GTI_MultiModeRCS
+    GUIRCSID = Monoprop;Cold Gas
+    availableInFlight = true
+    // ... one ModuleRCS MODULE per mode declared on the part, in matching order
+}
+```
