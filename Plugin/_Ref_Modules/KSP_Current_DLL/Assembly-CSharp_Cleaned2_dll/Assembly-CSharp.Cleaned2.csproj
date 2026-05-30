@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule" />
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>..\UnityEngine.AudioModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UnityWebRequestModule" />
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>..\UnityEngine.AnimationModule.dll</HintPath>
+    </Reference>
+    <Reference Include="KSPTrackIR" />
+    <Reference Include="KSPAssets">
+      <HintPath>..\KSPAssets.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine.AssetBundleModule" />
+    <Reference Include="Mono.Cecil" />
+    <Reference Include="UnityEngine.VehiclesModule" />
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Analytics.DataPrivacy" />
+    <Reference Include="UnityEngine.UnityWebRequestTextureModule" />
+    <Reference Include="UnityEngine.ImageConversionModule" />
+    <Reference Include="UnityEngine.UnityWebRequestAudioModule" />
+    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule" />
+    <Reference Include="UnityEngine.ScreenCaptureModule" />
+    <Reference Include="Unity.Analytics.StandardEvents" />
+    <Reference Include="UnityEngine.UnityAnalyticsModule" />
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.VRModule" />
+  </ItemGroup>
+</Project>

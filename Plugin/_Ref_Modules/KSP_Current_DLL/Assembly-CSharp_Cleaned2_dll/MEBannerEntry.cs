@@ -1,0 +1,121 @@
+using System;
+using System.IO;
+using Expansions.Missions;
+using UnityEngine;
+
+[Serializable]
+public class MEBannerEntry
+{
+	public string fileName;
+
+	public bool isInMissionFolder;
+
+	public Texture2D texture;
+
+	public DialogGUIToggleButton buttonReference;
+
+	private string relativePath;
+
+	private string missionFolderPath;
+
+	private bool isDuplicate;
+
+	public bool IsDuplicate
+	{
+		set
+		{
+			isDuplicate = value;
+		}
+	}
+
+	public string DisplayName => string.Concat(str1: (!isDuplicate) ? (isInMissionFolder ? "<b><color=#FFA500> (Missions Folder)</b></color></b>" : "<b><color=#4DC44D> (GameData Folder)</b></color></b>") : "<b><color=#FFA500> (Missions Folder)</b></color></b><b><color=#4DC44D> (GameData Folder)</b></color></b>", str0: fileName);
+
+	public string FullPath
+	{
+		get
+		{
+			string empty = string.Empty;
+			if (isInMissionFolder && missionFolderPath != string.Empty)
+			{
+				return missionFolderPath + relativePath + fileName;
+			}
+			return KSPUtil.ApplicationRootPath + "GameData/" + relativePath + fileName;
+		}
+	}
+
+	public MEBannerEntry(MEBannerType bannerType)
+	{
+		SetToDefault(bannerType);
+	}
+
+	public void LoadFromMissionFolder(string newFileName, MEBannerType bannerType, Mission mission)
+	{
+		if (!string.IsNullOrEmpty(newFileName))
+		{
+			isInMissionFolder = true;
+			fileName = newFileName;
+			relativePath = bannerType.ToString() + "/";
+			missionFolderPath = mission.BannersPath;
+			if (!File.Exists(FullPath))
+			{
+				texture = GetBannerDefaultTexture(bannerType);
+			}
+			else
+			{
+				texture = MissionsUtils.GetTextureInExternalPath(FullPath);
+			}
+		}
+	}
+
+	public bool CopySource(string newPath)
+	{
+		string fullPath = FullPath;
+		bool result = false;
+		if (File.Exists(fullPath) && fullPath != newPath)
+		{
+			File.Copy(fullPath, newPath, overwrite: true);
+			result = true;
+		}
+		return result;
+	}
+
+	public void DeleteSource()
+	{
+		string fullPath = FullPath;
+		if (File.Exists(fullPath))
+		{
+			File.Delete(fullPath);
+		}
+	}
+
+	public bool HasValidSource()
+	{
+		return File.Exists(FullPath);
+	}
+
+	public void SetToDefault(MEBannerType bannerType)
+	{
+		isInMissionFolder = false;
+		fileName = "default.png";
+		texture = GetBannerDefaultTexture(bannerType);
+		relativePath = GetBannerGameDataPath(bannerType);
+	}
+
+	private static Texture2D GetBannerDefaultTexture(MEBannerType bannerType)
+	{
+		return MissionsUtils.GetTextureInExternalPath(KSPUtil.ApplicationRootPath + "GameData/" + GetBannerGameDataPath(bannerType) + "default.png");
+	}
+
+	private static string GetBannerGameDataPath(MEBannerType bannerType)
+	{
+		return "SquadExpansion/MakingHistory/Banners/" + bannerType.ToString() + "/";
+	}
+
+	public void DestroyTexture()
+	{
+		if (isInMissionFolder)
+		{
+			UnityEngine.Object.Destroy(texture);
+		}
+	}
+}

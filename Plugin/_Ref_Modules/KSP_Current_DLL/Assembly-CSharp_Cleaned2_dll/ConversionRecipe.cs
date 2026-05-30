@@ -1,0 +1,34 @@
+using System.Collections.Generic;
+
+public class ConversionRecipe
+{
+	private List<ResourceRatio> _inputs = new List<ResourceRatio>();
+
+	private List<ResourceRatio> _outputs = new List<ResourceRatio>();
+
+	private List<ResourceRatio> _reqs = new List<ResourceRatio>();
+
+	public List<ResourceRatio> Inputs => _inputs;
+
+	public List<ResourceRatio> Outputs => _outputs;
+
+	public List<ResourceRatio> Requirements => _reqs;
+
+	public float FillAmount { get; set; }
+
+	public float TakeAmount { get; set; }
+
+	public ConversionRecipe()
+	{
+		Clear();
+	}
+
+	public void Clear()
+	{
+		_inputs.Clear();
+		_outputs.Clear();
+		_reqs.Clear();
+		FillAmount = 1f;
+		TakeAmount = 1f;
+	}
+}
