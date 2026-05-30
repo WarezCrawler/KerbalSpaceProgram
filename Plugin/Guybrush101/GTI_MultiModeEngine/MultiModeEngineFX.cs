@@ -210,6 +210,7 @@ namespace GTI
             currentEngineState = currentModuleEngine.getIgnitionState;
             //Debug.Log("Action currentModuleEngine.Shutdown(): " + ChooseOption + " new state is: " + currentEngineState);
         }
+        [KSPAction("Toggle Engine")]
         public void ActionToggle(KSPActionParam param)
         {
 
