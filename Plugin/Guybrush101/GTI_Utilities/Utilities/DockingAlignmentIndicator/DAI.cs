@@ -13,6 +13,7 @@ namespace GTI
         private NavBall navBall;
 
         private GameObject indicator;
+        private Material indicatorMaterial;
         private PluginConfiguration cfg;
         private Color color;
 
@@ -24,8 +25,8 @@ namespace GTI
                 if(PluginExists("NavBallDockingAlignmentIndicatorCE") && GTIConfig.NavBallDockingIndicator.Activate)
                     GTIDebug.Log("NavBallDockingAlignmentIndicatorCE Detected -- Disabling GTI Alignment indicator", "GTI - DAI", GTIConfig.iDebugLevel.DebugInfo);
                 Destroy(this.gameObject);
+                return;
             }
-                
 
             GTIDebug.Log(" ======== AWAKE  ======== ", GTIConfig.iDebugLevel.Low);
             this.cfg = KSP.IO.PluginConfiguration.CreateForType<GTI_NavBallDockingAlignmentIndicator>();
@@ -37,17 +38,26 @@ namespace GTI
 
         private void OnDestroy()
         {
-            GTIDebug.Log("OnDestroy", "GTI-DAI", GTIConfig.iDebugLevel.DebugInfo);
+            GTIDebug.Log("OnDestroy", "GTI - DAI", GTIConfig.iDebugLevel.DebugInfo);
+            if (this.indicator != null)
+                Destroy(this.indicator);
         }
 
         private void LateUpdate()
         {
+            // Active is driven by the 250 ms background detector (BackgroundDetectors.cs);
+            // it owns that flag, so we only read it here.
             if (!GTIConfig.NavBallDockingIndicator.Active)
-                goto EndLateUpdate;
+            {
+                HideIndicator();
+                return;
+            }
 
             if (this.navBall == null)
                 this.navBall = FindObjectOfType<NavBall>();
 
+            // Re-verify the target this frame: the detector only repolls every 250 ms,
+            // so the target can disappear between polls and would otherwise NRE below.
             if (FlightGlobals.fetch != null
                 && FlightGlobals.ready
                 && FlightGlobals.fetch.activeVessel != null
@@ -81,17 +91,18 @@ namespace GTI
                 // Set opacity
                 float value = Vector3.Dot(indicator.transform.localPosition.normalized, Vector3.forward);
                 value = Mathf.Clamp01(value);
-                this.indicator.GetComponent<MeshRenderer>().materials[0].SetFloat("_Opacity", value);
+                this.indicatorMaterial.SetFloat("_Opacity", value);
 
-                this.indicator.SetActive(indicator.transform.localPosition.z > 0.0d);
-                return;
+                this.indicator.SetActive(indicator.transform.localPosition.z > 0f);
             }
             else
             {
-                GTIConfig.NavBallDockingIndicator.Active = false;
+                HideIndicator();
             }
+        }
 
-            EndLateUpdate:
+        private void HideIndicator()
+        {
             if (this.indicator != null)
                 this.indicator.SetActive(false);
         }
@@ -101,7 +112,10 @@ namespace GTI
             this.indicator = GameObject.Instantiate(navBall.progradeVector.gameObject);
             this.indicator.transform.parent = navBall.progradeVector.parent;
             this.indicator.transform.position = navBall.progradeVector.position;
-            this.indicator.GetComponent<MeshRenderer>().materials[0].SetColor("_TintColor", this.color);
+            // Cache the instanced material once. Reading Renderer.materials each frame
+            // allocates a new array and instantiates material copies (GC churn + leak).
+            this.indicatorMaterial = this.indicator.GetComponent<MeshRenderer>().materials[0];
+            this.indicatorMaterial.SetColor("_TintColor", this.color);
         }
     }
 }

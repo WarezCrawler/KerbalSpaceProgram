@@ -96,9 +96,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy /Y "$(TargetDir)$(TargetName).dll" "T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins\$(TargetName).dll"
-copy /Y "$(TargetDir)\GTI_Config.cfg" "T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins\GTI_Config.cfg"
-::copy /Y "$(TargetDir)$(TargetName).dll" "S:\Steam\SteamApps\common\Kerbal Space Program\GameData\GTI_Utilities\Plugins\$(TargetName).dll"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(TargetPath)" "$(GTIDeployDir)\$(TargetFileName)"
+copy /Y "$(TargetDir)GTI_Config.cfg" "$(GTIDeployDir)\GTI_Config.cfg"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>::Comment</PreBuildEvent>

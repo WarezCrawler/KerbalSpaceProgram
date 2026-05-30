@@ -24,7 +24,6 @@ SOFTWARE.
 */
 
 using System;
-using System.Windows;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -47,15 +46,14 @@ namespace GTI
         bool isFocusing;
         bool showUpdateMessage = true;
 
-        Vessel vessel;
-        Part part;
-        GameObject CurrentGameObj;
+        // Raycast mask for part-picking: layer 0 (Default) + layer 19 (parts/local scenery).
+        const int partRaycastMask = 0x80001;
 
         void Start()
         {
             if (!GTIConfig.CameraFocusChanger.Activate || PluginExists("CameraFocusChanger"))
             {
-                Destroy(this);
+                Destroy(this.gameObject);
                 return;
             }
                 
@@ -93,7 +91,10 @@ namespace GTI
             GameEvents.onStageSeparation.Remove(OnStageSeparation);
             GameEvents.onUndock.Remove(OnUndock);
 
-            API.SetInstance(null);
+            // Only clear the static slot if this instance is the one registered,
+            // so an early-destroyed (disabled) instance can't null out a live one.
+            if (API.IsInstance(this))
+                API.SetInstance(null);
         }
 
         void OnCameraChange(CameraManager.CameraMode cameraMode)
@@ -105,18 +106,18 @@ namespace GTI
             }
         }
 
-        void OnVesselChange(Vessel vessel)
+        void OnVesselChange(Vessel changedVessel)
         {
-            //DebugPrint(string.Format("vessel changed to {0}", vessel.vesselName));
+            //DebugPrint(string.Format("vessel changed to {0}", changedVessel.vesselName));
             CheckForVesselChanged();
         }
 
-        void OnVesselWillDestroy(Vessel vessel)
+        void OnVesselWillDestroy(Vessel destroyedVessel)
         {
             if (targetTransform != null)
             {
-                part = Part.FromGO(targetTransform.gameObject);
-                if (part != null && part.vessel == vessel)
+                Part targetPart = Part.FromGO(targetTransform.gameObject);
+                if (targetPart != null && targetPart.vessel == destroyedVessel)
                 {
                     //DebugPrint("vessel about to be destroyed");
                     ResetFocus();
@@ -124,12 +125,12 @@ namespace GTI
             }
         }
 
-        void OnVesselGoOnRails(Vessel vessel)
+        void OnVesselGoOnRails(Vessel railedVessel)
         {
             if (targetTransform != null)
             {
-                part = Part.FromGO(targetTransform.gameObject);
-                if (part != null && part.vessel == vessel)
+                Part targetPart = Part.FromGO(targetTransform.gameObject);
+                if (targetPart != null && targetPart.vessel == railedVessel)
                 {
                     //DebugPrint("vessel about to be packed");
                     ResetFocus();
@@ -152,8 +153,8 @@ namespace GTI
             Vessel currentVessel = FlightGlobals.ActiveVessel;
             if (targetTransform != null)
             {
-                part = Part.FromGO(targetTransform.gameObject);
-                if (part != null && part.vessel != currentVessel)
+                Part targetPart = Part.FromGO(targetTransform.gameObject);
+                if (targetPart != null && targetPart.vessel != currentVessel)
                 {
                     //DebugPrint("vessel missmatch");
                     string message = string.Format("CFC WARNING\n!!!Controlled Vessel is not Focussed!!!");
@@ -166,8 +167,9 @@ namespace GTI
         void Update()
         {
             // check if we are trying to change the focus
-            CurrentGameObj = EventSystem.current.currentSelectedGameObject;
-            bool inputFieldIsFocused = InputLockManager.IsAllLocked(ControlTypes.KEYBOARDINPUT) || (CurrentGameObj != null && CurrentGameObj.GetComponent<InputField>() != null && CurrentGameObj.GetComponent<InputField>().isFocused);
+            GameObject currentGameObj = EventSystem.current.currentSelectedGameObject;
+            InputField selectedInputField = currentGameObj != null ? currentGameObj.GetComponent<InputField>() : null;
+            bool inputFieldIsFocused = InputLockManager.IsAllLocked(ControlTypes.KEYBOARDINPUT) || (selectedInputField != null && selectedInputField.isFocused);
             if (!inputFieldIsFocused && Input.GetKeyDown(actionKey))
             {
                 
@@ -222,8 +224,8 @@ namespace GTI
 
             if (showUpdateMessage)
             {
-                part = Part.FromGO(transform.gameObject);
-                string message = string.Format("CFC Actived ({0})", part ? part.partInfo.title : "." + transform.gameObject.name);
+                Part focusedPart = Part.FromGO(transform.gameObject);
+                string message = string.Format("CFC Actived ({0})", focusedPart ? focusedPart.partInfo.title : "." + transform.gameObject.name);
                 var screenMessage = new ScreenMessage(message, 1.5f, ScreenMessageStyle.UPPER_CENTER);
                 ScreenMessages.PostScreenMessage(screenMessage);
             }
@@ -256,8 +258,8 @@ namespace GTI
             // do we have a target for the camera focus
             if (isFocusing)
             {
-                vessel = FlightGlobals.ActiveVessel;
-                Vector3d currentPosition = vessel.GetWorldPos3D();
+                Vessel activeVessel = FlightGlobals.ActiveVessel;
+                Vector3d currentPosition = activeVessel.GetWorldPos3D();
 
                 Vector3 targetPosition = targetTransform != null ? targetTransform.position : new Vector3((float)currentPosition.x, (float)currentPosition.y, (float)currentPosition.z);
 
@@ -275,13 +277,13 @@ namespace GTI
                 }
                 else
                 {
-                    //DebugPrint(string.Format("Moving by {0}", (positionDifference.normalized * Time.fixedDeltaTime * (distance * Math.Max(4 - distance, 1))).magnitude));
-                    flightCamera.transform.parent.position -= positionDifference.normalized * Time.fixedDeltaTime * (distance * Math.Max(4 - distance, 1));
+                    //DebugPrint(string.Format("Moving by {0}", (positionDifference.normalized * Time.deltaTime * (distance * Math.Max(4 - distance, 1))).magnitude));
+                    flightCamera.transform.parent.position -= positionDifference.normalized * Time.deltaTime * (distance * Math.Max(4 - distance, 1));
                     // if the parts are not of the same craft, boost the speed at which we move towards it
-                    part = targetTransform != null ? Part.FromGO(targetTransform.gameObject) : null;
-                    if ((part != null && part.vessel != vessel) || targetTransform == null)
+                    Part targetPart = targetTransform != null ? Part.FromGO(targetTransform.gameObject) : null;
+                    if ((targetPart != null && targetPart.vessel != activeVessel) || targetTransform == null)
                     {
-                        flightCamera.transform.parent.position -= positionDifference.normalized * Time.fixedDeltaTime;
+                        flightCamera.transform.parent.position -= positionDifference.normalized * Time.deltaTime;
                         if (Time.time - startFocusTime > 10.0f)
                             hasReachedTarget = true;
                     }
@@ -294,7 +296,7 @@ namespace GTI
             Vector3 aim = new Vector3(Input.mousePosition.x, Input.mousePosition.y, 0);
             Ray ray = flightCamera.mainCamera.ScreenPointToRay(aim);
             RaycastHit hit;
-            if (Physics.Raycast(ray, out hit, 10000, 0x80001))
+            if (Physics.Raycast(ray, out hit, 10000, partRaycastMask))
             {
                 return hit.transform;
             }
@@ -314,6 +316,11 @@ namespace GTI
         static public bool IsCFCAvailable()
         {
             return s_cfcInstance != null;
+        }
+
+        static public bool IsInstance(GTI_CameraFocusChanger cfcInstance)
+        {
+            return s_cfcInstance == cfcInstance;
         }
 
         static public bool FocusOnPart(Part part)

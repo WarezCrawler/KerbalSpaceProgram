@@ -74,3 +74,11 @@ Ships `GTI_Config.cfg` (deployed to `GameData/GTI_Utilities/Plugins/`). Sections
 ## Build output
 
 DLLs/config are written to the live GameData plugins folder via the `.csproj` post-build path.
+
+## Licensing
+
+GTI code is MIT (see `Plugin/Guybrush101/Licence`), **except** for
+`Utilities/DockingAlignmentIndicator/DAI.cs`, which is derived from the "NavBall Docking
+Alignment Indicator" mod by mic-e (maintained by linuxgurugamer) and is **GPLv3**. Because
+DAI.cs is compiled into `GTI_Utilities.dll`, distribution of that binary is subject to GPLv3
+with respect to the derived component. See the DAI.cs header and the repo `LICENSE` for details.

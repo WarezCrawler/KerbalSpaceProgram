@@ -210,6 +210,11 @@ namespace GTI
                 chooseOption.options = Options;
                 chooseOption.display = OptionsDisplay;
                 chooseOption.onFieldChanged = selectMode;
+                // Also run the switch when a symmetry counterpart's value changes. KSP copies the chosen
+                // value to counterparts but fires onSymmetryFieldChanged (NOT onFieldChanged) on them - so
+                // without this line a counterpart keeps its previous mode's modules active (e.g. an RCS block
+                // left on the old propellant), making the vessel behave as if two modes are live at once.
+                chooseOption.onSymmetryFieldChanged = selectMode;
                 chooseOption.affectSymCounterparts = affectSymCounterpartsInFlight ? UI_Scene.All : UI_Scene.Editor;
 
                 //Update Actions GUI texts and hide the ones not applicable

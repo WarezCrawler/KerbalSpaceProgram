@@ -1,6 +1,9 @@
 # KSP Mod Development
 
-Author: **WarezCrawler** / Guybrush Threepwood Industries (GTI). All mods MIT licensed.
+Author: **WarezCrawler** / Guybrush Threepwood Industries (GTI). All mods MIT licensed,
+**except** `GTI_Utilities/Utilities/DockingAlignmentIndicator/DAI.cs`, which is GPLv3
+(derived from mic-e / linuxgurugamer's NavBall Docking Alignment Indicator) and so subjects
+the compiled `GTI_Utilities.dll` to GPLv3 for that component. See `LICENSE`.
 
 ## File locations
 

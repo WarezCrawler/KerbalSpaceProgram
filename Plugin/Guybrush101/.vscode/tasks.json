@@ -1,0 +1,106 @@
+{
+  // Builds the GTI plugin solution with the full-framework MSBuild from VS 2019.
+  // A successful build runs each project's post-build copy, deploying the DLLs (and
+  // GTI_Config.cfg) into T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins.
+  //
+  // Open THIS folder (Plugin\Guybrush101) as the VS Code workspace so the relative
+  // paths below resolve.
+  "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder}"
+  },
+  "inputs": [
+    {
+      "id": "project",
+      "type": "pickString",
+      "description": "Which plugin project to build?",
+      "options": [
+        "GTI_Utilities\\GTI_Utilities.csproj",
+        "GTI_MultiModeConverter\\GTI_MultiModeConverter.csproj",
+        "GTI_MultiModeEngine\\GTI_MultiModeEngine.csproj",
+        "GTI_MultiModeHarvester\\GTI_MultiModeHarvester.csproj",
+        "GTI_MultiModeIntake\\GTI_MultiModeIntake.csproj"
+      ],
+      "default": "GTI_Utilities\\GTI_Utilities.csproj"
+    },
+    {
+      "id": "configuration",
+      "type": "pickString",
+      "description": "Build configuration",
+      "options": ["Release", "Debug"],
+      "default": "Release"
+    }
+  ],
+  "tasks": [
+    {
+      // Default build (Ctrl+Shift+B). Builds GTI_Utilities first (the others reference
+      // its Release DLL), then the whole solution.
+      "label": "Build & Deploy — All (Release)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "msbuild: GTI_Utilities (Release)",
+        "msbuild: Solution (Release)"
+      ],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "msbuild: GTI_Utilities (Release)",
+      "type": "process",
+      "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+      "args": [
+        "GTI_Utilities\\GTI_Utilities.csproj",
+        "/t:Build",
+        "/p:Configuration=Release",
+        "/v:minimal",
+        "/nologo"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "msbuild: Solution (Release)",
+      "type": "process",
+      "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+      "args": [
+        "GuybrushThreepwoodIndustries.sln",
+        "/t:Build",
+        "/p:Configuration=Release",
+        "/v:minimal",
+        "/nologo"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": false }
+    },
+    {
+      // Build one project. NOTE: building a GTI_MultiMode* project on its own requires
+      // GTI_Utilities to have been built in Release at least once (HintPath dependency).
+      "label": "Build single plugin",
+      "type": "process",
+      "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+      "args": [
+        "${input:project}",
+        "/t:Build",
+        "/p:Configuration=${input:configuration}",
+        "/v:minimal",
+        "/nologo"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "Clean (Release)",
+      "type": "process",
+      "command": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+      "args": [
+        "GuybrushThreepwoodIndustries.sln",
+        "/t:Clean",
+        "/p:Configuration=Release",
+        "/v:minimal",
+        "/nologo"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ]
+}

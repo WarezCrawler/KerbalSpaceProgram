@@ -19,3 +19,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+-------------------------------------------------------------------------------
+THIRD-PARTY COMPONENTS / LICENSE EXCEPTIONS
+
+The MIT terms above apply to the GTI-authored code in this plugin suite, with the
+following exception:
+
+- GTI_Utilities/Utilities/DockingAlignmentIndicator/DAI.cs (the NavBall Docking
+  Alignment Indicator) is derived from the "NavBall Docking Alignment Indicator"
+  mod by mic-e, maintained by linuxgurugamer, and is licensed under the GNU
+  General Public License v3.0 (GPLv3), NOT MIT.
+
+  Because this file is compiled into the shared GTI_Utilities.dll, distribution
+  of that binary is subject to the GPLv3 with respect to the derived component.
+  See the header of DAI.cs for the original attribution.
