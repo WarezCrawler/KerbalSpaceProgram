@@ -47,9 +47,6 @@ namespace GTI
             get => _propRatios;
             set
             {
-                //string[] arrInString;
-                //bool booparse;
-
                 _propRatios = value;
 
                 //Evaluate if multi propellants are in the string, put result to _propAmount
@@ -65,7 +62,6 @@ namespace GTI
                     }
                 }
                 catch (Exception e) { GTIDebug.LogError("CustomTypes.PropellantList -> Could not parse propellant ratio into integer.\n" + value + "\nError trown:\n" + e); throw e; }
-                //CalcDensity(propellants, _propRatios, propIgnoreForISP);
             }
         }
         public string[] GetPropellantRatios
@@ -473,7 +469,7 @@ namespace GTI
 
                 if (!ResourceFlowModeEmpty)
                 {
-                    propNode.AddValue("resourceFlowMode", arrtargetResourceFlowMode[i]); //Debug.Log("propNode.AddValue('resourceFlowMode', " + arrtargetResourceFlowMode[i] + ")");
+                    propNode.AddValue("resourceFlowMode", arrtargetResourceFlowMode[i]);
                 }
             }
             //Update the engine with new propellant configuration
