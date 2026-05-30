@@ -194,118 +194,8 @@ namespace GTI
             }
         }
 
-        #region Supporting settings
-        //private float _propDensity;
-        //private bool _propDensityCalculated = false;
-        //private float propDensity
-        //{
-        //    get
-        //    {
-        //        //Check if input arrays is symmetric
-        //        if (_propellantsArray.Length == _propRatiosArray.Length)
-        //        {
-        //            _propDensityCalculated = CalcDensity(propellants, _propRatios, propIgnoreForISP);
-        //            //Check if the density is calculated
-        //            if (_propDensityCalculated)
-        //            {
-        //                return _propDensity;
-        //            }
-        //            else
-        //            {
-        //                return 0;
-        //            }
-
-        //        }
-        //        else
-        //        {
-        //            //Failure results in false calculation and returning 0
-        //            _propDensityCalculated = false;
-        //            return 0;
-        //        }
-
-        //    }
-        //    set
-        //    {
-        //        _propDensity = value;
-        //    }
-        //}
-        //private int _propAmount;
-        #endregion
-
-        #region Methods
-        //private bool CalcDensity(string inPropellants, string inRatios, string inIgnoreForIsp)
-        //{
-        //    bool returnSuccessStatus = false, useIgnoreForISP = false, IgnoreForISP;
-        //    string[] arrInPropellants, arrInRatios, arrIgnoreForIsp;
-
-        //    try
-        //    {
-        //        arrInPropellants = inPropellants.Trim().Split(',');
-        //        arrInRatios = inRatios.Trim().Split(',');
-
-        //        if (arrInPropellants.Length != arrInRatios.Length) { return false; }
-
-        //        //Decide if ignoreForISP property should be used for density calculation
-        //        arrIgnoreForIsp = inIgnoreForIsp.Trim().Split(',');
-        //        if ((string.IsNullOrEmpty(inIgnoreForIsp) || inIgnoreForIsp.Trim().Length == 0))
-        //        { useIgnoreForISP = false; }
-        //        else
-        //        {
-        //            //arrIgnoreForIsp = inIgnoreForIsp.Trim().Split(',');
-        //            if (arrIgnoreForIsp.Length == arrInPropellants.Length) { useIgnoreForISP = true; }
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        //If split fails, return no success
-        //        return false;
-        //    }
-
-        //    try
-        //    {
-        //        //GTIDebug.Log("Running _propDensity = fx.calcWeightedDensity(_propellants, _propRatios)");
-
-        //        //Create strings for the calculation
-        //        if (useIgnoreForISP)                    //Is IgnoreForISP to be used
-        //        {
-        //            inPropellants = string.Empty;
-        //            inRatios = string.Empty;
-        //            //loop the arrays and recreate cleaned arrays
-        //            for (int i = 0; i < arrInPropellants.Length; i++)
-        //            {
-        //                //GTIDebug.Log("if ( !bool.TryParse(arrIgnoreForIsp[i], out IgnoreForISP) || IgnoreForISP == false)");
-        //                if (!bool.TryParse(arrIgnoreForIsp[i], out IgnoreForISP) || IgnoreForISP == false)
-        //                {
-        //                    inPropellants = inPropellants + "," + arrInPropellants[i];
-        //                    inRatios = inRatios + "," + arrInRatios[i];
-        //                }
-        //            }
-        //        }
-
-        //        //Calculate the weighted density of the propellants
-        //        propDensity = PhysicsUtilities.calcWeightedDensity(inPropellants, inRatios);
-        //        if (propDensity > 0) { returnSuccessStatus = true; } else { returnSuccessStatus = false; }
-
-        //        //GTIDebug.Log("_propDensity = fx.calcWeightedDensity(_propellants, _propRatios) is successfull");
-        //    }
-        //    catch
-        //    {
-        //        GTIDebug.LogError("Guybrush101.CustomTypes.CalcDensity Failed By Exception");
-        //        returnSuccessStatus = false;
-        //        //throw;
-        //    }
-
-        //    return returnSuccessStatus;
-        //}
-
-        //public override string ToString()
-        //{
-        //    return moduleIndex + "\t" + ID + "\t" + Name;
-        //}
-        #endregion
     }
 
-    //partModule
     public class GTI_MultiModeEngine : GTI_MultiMode<MultiModeEngine>
     {
 
@@ -426,17 +316,6 @@ namespace GTI
                 #endregion
 
                 #region Parse settings
-                //bool boolParseResult;
-
-                //string[] arrGUIengineModeNames, arrPropellantNames, arrPropellantRatios;
-                //string[] arrPropDrawGauge, arrPropIgnoreForISP, arrResourceFlowMode;
-                //string[] arrMaxThrust, arrHeatProd, arrEngineTypes;
-                //string[] arratmChangeFlows;
-                //string[] arrUseEngineResponseTime, arrEngineAccelerationSpeed, arrEngineDecelerationSpeed;
-
-                //string[] arruseVelCurves, arruseAtmCurves;
-                //string[] arrusethrottleISPCurves;
-
                 //Propellant level
                 GUIengineModeNamesEmpty = ArraySplitEvaluate(GUIengineModeNames, out string[] arrGUIengineModeNames, ';');
                 PropellantNamesEmpty = ArraySplitEvaluate(propellantNames, out string[] arrPropellantNames, ';');
@@ -544,7 +423,6 @@ namespace GTI
 
             float floatParseResult;
             bool boolParseResult;
-            //currentEngineState = false;
 
             //Get the Ignition state, i.e. is the engine shutdown or activated
             currentEngineState = ModuleEngines.getIgnitionState;
@@ -569,7 +447,6 @@ namespace GTI
             arrtargetResourceFlowMode = ResourceFlowModeEmpty ? new string[0] : modes[selectedMode].resourceFlowMode.Split(',');
 
 
-            //Debug.Log("BEFORE for (int i = 0; i < arrtargetPropellants.Length; i++)");
             //Create new propellent nodes by looping them in.
             for (int i = 0; i < arrtargetPropellants.Length; i++)
             {
@@ -588,8 +465,6 @@ namespace GTI
                 }
                 else { targetDrawGauge = true; /*Debug.Log("MultiModeEngine: PropDrawGauge was empty. Set to true.");*/ }
 
-                //Debug.Log("!bool.TryParse(arrtargetIgnoreForISP[i], out targetIgnoreForISP)\ntargetIgnoreForISP: " + targetIgnoreForISP);
-
                 ConfigNode propNode = newPropNode.AddNode("PROPELLANT");
                 propNode.AddValue("name", arrtargetPropellants[i]);
                 propNode.AddValue("ratio", targetRatio);
@@ -603,7 +478,6 @@ namespace GTI
             }
             //Update the engine with new propellant configuration
             //NOTICE: The original propellant nodes are overwritten, so we do not need to delete them
-            //Debug.Log("Before ConfigNode Load\n" + newPropNode.ToString());
             if (modes.Count > 1) ModuleEngines.Load(newPropNode);
             #endregion
 
@@ -612,19 +486,16 @@ namespace GTI
             if (!VelCurveEmpty) ModuleEngines.velCurve.Load(modes[selectedMode].velCurve);
             if (!AtmCurveEmpty) ModuleEngines.atmCurve.Load(modes[selectedMode].atmCurve);
 
-            //Debug.Log("[GTI] ISP Float Curve : " + engineModeList[selectedMode].GetthrottleISPFloatCurve.Evaluate(0.5f).ToString());
             if (!GTIthrottleISPCurvesEmpty) GTIDebug.Log("ISP Float Curve : " + modes[selectedMode].GTIthrottleISPCurve.ToString(), iDebugLevel.DebugInfo); else GTIDebug.Log("no ISP Float Curve : " + GTIDebug.GetVesselName(part), iDebugLevel.DebugInfo);
 
             #endregion
 
             //Get maxISP from the atmosphere curve
-            //maxISP = KeyFrameGetMaxValue(ModuleEngines.atmosphereCurve.Curve.keys);
 
             //Set max Thrust and the corresponding fuelflow
             if (!MaxThrustEmpty) { ModuleEngines.maxThrust = modes[selectedMode].maxThrust; }
 
 
-            //ModuleEngines.maxFuelFlow = ModuleEngines.maxThrust / (ModuleEngines.atmosphereCurve.Evaluate(0f) * ModuleEngines.g);
             ModuleEngines.maxFuelFlow = calcFuelFlow(
                 Thrust: ModuleEngines.maxThrust,                             //Thrust: propList[selectedPropellant].maxThrust, 
                                                                              //Density: propList[selectedPropellant].propDensity, 
@@ -636,7 +507,6 @@ namespace GTI
             if (!ModuleEngines.useThrottleIspCurve && !useGTIthrottleISPCurvesEmpty)
             {
                 //Update ISP curve based in the GTI throttleISPCurve
-                //!throttleISPCurvesEmpty && !usethrottleISPCurvesEmpty && bool.Parse(engineModeList[selectedMode].usethrottleISPCurve) && !ModuleEngines.useThrottleIspCurve
                 onThrottleChange(FlightInputHandler.state.mainThrottle, FlightInputHandler.state.mainThrottle);
             }
             else
@@ -654,7 +524,6 @@ namespace GTI
                 "\nResulting maxFuelFlow = \t" + ModuleEngines.maxFuelFlow
                 , iDebugLevel.DebugInfo);
 
-            //Debug.Log("Before misc settings");
             if (float.TryParse(modes[selectedMode].heatProduction, out floatParseResult) && !HeatProdEmpty) { ModuleEngines.heatProduction = floatParseResult; }
             if (bool.TryParse(modes[selectedMode].atmChangeFlow, out boolParseResult) && !atmChangeFlowsEmpty) { ModuleEngines.atmChangeFlow = boolParseResult; }
 
@@ -665,7 +534,6 @@ namespace GTI
             if (bool.TryParse(modes[selectedMode].useVelCurve, out boolParseResult) && !useVelCurvesEmpty) { ModuleEngines.useVelCurve = boolParseResult; }
             if (bool.TryParse(modes[selectedMode].useAtmCurve, out boolParseResult) && !useAtmCurvesEmpty) { ModuleEngines.useAtmCurve = boolParseResult; }
 
-            //Debug.Log("Before engine type");
             #region Set the engine type
             //[LiquidFuel, Nuclear, SolidBooster, Turbine, MonoProp, ScramJet, Electric, Generic, Piston]
             if (!EngineTypesEmpty) { ModuleEngines.engineType = GetEngineType(modes[selectedMode].engineType); }
@@ -674,7 +542,6 @@ namespace GTI
             if (!silentUpdate) writeScreenMessage();
 
             //Restart engine if it was on before switching
-            //???? if (!initialUpdate)
             if (currentEngineState)
             {
                 if (!initialUpdate)
@@ -687,7 +554,6 @@ namespace GTI
 
         protected override void writeScreenMessage()
         {
-            //string strOutInfo = string.Empty;
             StringBuilder strOutInfo = new StringBuilder();
 
             strOutInfo.AppendLine("Engine mode changed to " + modes[selectedMode].Name);
@@ -710,13 +576,10 @@ namespace GTI
 
         private void onThrottleChange(float newThrottle, float origThrottle)
         {
-            //!throttleISPCurvesEmpty && !usethrottleISPCurvesEmpty && bool.Parse(engineModeList[selectedMode].usethrottleISPCurve) && !ModuleEngines.useThrottleIspCurve
-
             //Criteria: "Active Vessel", "throttleCurve exists", "throttleCurve is to be used" and "stock throttle curve not implemented"
             if (this.part.vessel == FlightGlobals.ActiveVessel && !GTIthrottleISPCurvesEmpty && modes[selectedMode].useGTIthrottleISPCurve && !ModuleEngines.useThrottleIspCurve)
             {
                 float newISPfactor = modes[selectedMode].GTIthrottleISPFloatCurve.Evaluate(ModuleEngines.requestedThrottle);
-                //float ISPrefactor = newISPfactor / currentISPfactor;
                 float time, value, inTangent, outTangent;
                 AnimationCurve newCurve = new AnimationCurve();
 
@@ -758,8 +621,6 @@ namespace GTI
                     );
                 GTIDebug.Log("ModuleEngines.maxFuelFlow: " + ModuleEngines.maxFuelFlow, iDebugLevel.DebugInfo);
 
-                //currentISPfactor = newISPfactor;
-
                 GTIDebug.Log("END---------------------------------------------------------------------------------- ", iDebugLevel.DebugInfo);
             }
             else
@@ -773,7 +634,6 @@ namespace GTI
         }
         protected override void OnDestroy()
         {
-            //GTIDebug.Log("GTI_MultiModeEngine destroyed", iDebugLevel.VeryHigh);
             base.OnDestroy();
             if (onThrottleChangeEvent != null)
             {
@@ -832,7 +692,6 @@ namespace GTI
             for (int i = 0; i < arrPropellantNames.Length; i++)
             {
                 Info.Append("<b><color=yellow>Engine Mode: </color></b>");
-                //if (!GUIengineModeNamesEmpty) Info.Append("<b><color=yellow>Name: </color></b>" + arrGUIengineModeNames[i]);
                 Info.Append(GUIengineModeNamesEmpty ? i.ToString() : arrGUIengineModeNames[i]);
                 Info.AppendLine(); Info.AppendLine();
 
@@ -874,15 +733,6 @@ namespace GTI
 
             Info.AppendLine("\nIn Flight switching is <color=yellow>" + (availableInFlight ? "available" : "not available") + "</color>");
 
-            //str.AppendFormat("Maximal force: {0:0.0}iN\n", maxGeneratorForce);
-            //str.AppendFormat("Maximal charge time: {0:0.0}s\n\n", maxChargeTime);
-            //str.AppendFormat("Requires\n");
-            //str.AppendFormat("- Electric charge: {0:0.00}/s\n\n", requiredElectricalCharge);
-            //str.Append("Navigational computer\n");
-            //str.Append("- Required force\n");
-            //str.Append("- Success probability\n");
-
-            //return "GTI Multi Mode Engine";
             return Info.ToString();
         }
     }
