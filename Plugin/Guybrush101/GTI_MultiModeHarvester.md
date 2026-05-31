@@ -5,7 +5,7 @@ drill that can harvest different resources.
 
 - **Source:** `Plugin/Guybrush101/GTI_MultiModeHarvester/GTI_MultiModeHarvester.cs`
 - **Output DLL:** `GTI_MultiModeHarvester.dll`
-- **Namespace:** `GTI_MultiModeHarvester`
+- **Namespace:** `GTI`
 - **Target framework:** .NET Framework 4.7.1
 - **Depends on:** GTI_Utilities, Assembly-CSharp, UnityEngine
 - **Module name (for .cfg):** `GTI_MultiModeHarvester`
@@ -17,8 +17,12 @@ GTI_MultiModeHarvester : GTI_MultiMode<MultiMode>
 ```
 
 Targets the part's `List<ModuleResourceHarvester>`. On mode switch it enables the selected
-harvester and disables the others, hides the stock harvester action buttons, and shows the
-current harvester's inputs/outputs on screen. Supports `ModuleAnimationGroup` gating.
+harvester and disables/stops the others, and shows the current harvester's inputs and harvested
+output resource on screen. Supports `ModuleAnimationGroup` gating.
+
+The stock per-harvester actions (Toggle/Start/Stop Resource Converter) are disabled and replaced
+by the module-level actions below, which route to the currently selected harvester (tracked via
+`currentHarvester`) so a single action-group binding controls whichever mode is active.
 
 ## Config fields
 
@@ -27,6 +31,9 @@ Modes map to the order of the `ModuleResourceHarvester` modules declared on the 
 
 ## Actions
 
+- `ActionActivate` ("Activate Harvester") — start the current harvester.
+- `ActionShutdown` ("Shutdown Harvester") — stop the current harvester.
+- `ActionToggle` ("Toggle Harvester") — toggle the current harvester.
 - Inherited: `MultiModeAction_1…12`, `ActionNextMode`, `ActionPreviousMode`, `EVAChangeMode`.
 
 ## .cfg pattern

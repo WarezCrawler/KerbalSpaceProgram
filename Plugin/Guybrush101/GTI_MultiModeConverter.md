@@ -17,8 +17,10 @@ GTI_MultiModeConverter : GTI_MultiMode<MultiMode>
 ```
 
 Targets the part's `List<ModuleResourceConverter>`. On mode switch it activates the selected
-converter and stops the others; the stock converter action buttons (Toggle/Start/Stop) are hidden
-and driven internally. Supports `ModuleAnimationGroup` gating.
+converter and stops the others, and shows the selected mode's name plus its recipe inputs/outputs
+on screen. The stock converter action buttons (Toggle/Start/Stop) are hidden and driven internally
+via the module-level actions below (routed through `currentConverter`). Supports
+`ModuleAnimationGroup` gating.
 
 ## Config fields
 

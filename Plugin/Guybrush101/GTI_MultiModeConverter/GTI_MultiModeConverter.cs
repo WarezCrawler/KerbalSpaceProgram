@@ -92,17 +92,20 @@ namespace GTI
 
         protected override void writeScreenMessage()
         {
-            //string strOutInfo = string.Empty;
+            // Resolve the selected converter once via its moduleIndex (selectedMode is an index into modes,
+            // not necessarily into MRC).
+            ModuleResourceConverter selected = MRC[modes[selectedMode].moduleIndex];
+
             StringBuilder strOutInfo = new StringBuilder();
 
-            strOutInfo.AppendLine("Converter mode changed to " + modes[selectedMode]);
+            strOutInfo.AppendLine("Converter mode changed to " + modes[selectedMode].Name);
             strOutInfo.AppendLine("Inputs:");
-            foreach (ResourceRatio input in MRC[selectedMode].Recipe.Inputs)
+            foreach (ResourceRatio input in selected.Recipe.Inputs)
             {
                 strOutInfo.AppendLine(input.ResourceName + " (" + input.Ratio + ")");
             }
             strOutInfo.AppendLine("Outputs:");
-            foreach (ResourceRatio output in MRC[selectedMode].Recipe.Outputs)
+            foreach (ResourceRatio output in selected.Recipe.Outputs)
             {
                 strOutInfo.AppendLine(output.ResourceName + " (" + output.Ratio + ")");
             }

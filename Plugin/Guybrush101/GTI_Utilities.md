@@ -5,7 +5,7 @@ depends on this assembly.
 
 - **Source:** `Plugin/Guybrush101/GTI_Utilities/`
 - **Output DLL:** `GTI_Utilities.dll`
-- **Namespace:** `GTI`
+- **Namespace:** `GTI` (most types; `GTI_Events.cs` types are in `GTI.Events`)
 - **Target framework:** .NET Framework 4.7.1
 - **References:** Assembly-CSharp, Assembly-CSharp-firstpass, UnityEngine (Core/CoreModule/
   InputLegacyModule/PhysicsModule/UI), System
@@ -50,7 +50,7 @@ PartModule
 
 ## Other components
 
-- **`GTI_Events.cs`**
+- **`GTI_Events.cs`** (namespace `GTI.Events`)
   - `GTI_EventCreator` (`KSPAddon` MainMenu) — registers a custom `onThrottleChange<float,float>`
     (current, previous) game event.
   - `GTI_Events` (`KSPAddon` Flight) — background thread polling throttle; fires `onThrottleChange`;
