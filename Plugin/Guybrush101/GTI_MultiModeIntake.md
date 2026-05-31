@@ -46,7 +46,7 @@ Plus shared `GTI_MultiMode<T>` fields — see [GTI_Utilities.md](GTI_Utilities.m
 - `IntakeActivate()` — "Open Intake (GTI)".
 - `IntakeDeactivate()` — "Close Intake (GTI)".
 - `GetStatus()` — debug: list intake module properties.
-- `ToggleAction` — toggle intake on/off.
+- `ToggleAction` ("Toggle Intake") — toggle intake on/off.
 - Inherited: `MultiModeAction_1…12`, `ActionNextMode`, `ActionPreviousMode`, `EVAChangeMode`.
 
 ## .cfg pattern
