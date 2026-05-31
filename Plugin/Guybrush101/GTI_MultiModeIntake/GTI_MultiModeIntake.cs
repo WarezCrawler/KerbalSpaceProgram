@@ -63,13 +63,6 @@ namespace GTI
 
             ConfigNode[] ResourceNodes = part.GetPartModuleConfigs("RESOURCE");
             GTIDebug.Log(ResourceNodes.ToStringExt(), iDebugLevel.DebugInfo);
-            //foreach(ConfigNode n in ResourceNodes)
-            //{
-            //    GTIDebug.Log(n.ToString(), iDebugLevel.DebugInfo);
-            //    GTIDebug.Log(n.values.GetValue("name"), iDebugLevel.DebugInfo);
-            //}
-
-            //GetPartModuleConfig(this.part, "MODULE", "name", "GTI_MultiModeEngine")
 
             //Find resourceIntake modules
             ModuleIntakes = part.FindModulesImplementing<ModuleResourceIntake>();
@@ -158,16 +151,6 @@ namespace GTI
                 IntakeResource.AddValue("amount", resIniAmount);
                 IntakeResource.AddValue("maxAmount", resMaxAmount);
 
-                //All resource properties
-                //partResource.amount = amount;
-                //partResource.maxAmount = maxAmount;
-                //partResource.flowState = flowState;
-                //partResource.isTweakable = isTweakable;
-                //partResource.hideFlow = hideFlow;
-                //partResource.isVisible = isVisible;
-                //partResource.flowMode = flow;
-
-
                 //Clear all resources since I get null ref error when I do not do this
                 //currentPart.Resources.Clear();
                 bool preserveResource;
@@ -189,7 +172,6 @@ namespace GTI
                     if (!preserveResource)
                     {
                         GTIDebug.Log("Removing Resource: " + resource.resourceName, iDebugLevel.DebugInfo);
-                        //if (currentPart.Resources.Remove(resource)) GTIDebug.Log("Resource removed: " + GetResourceID(resource.resourceName), iDebugLevel.DebugInfo);
                         resourcesDeleteList.Add(resource);
                     }
                 }
@@ -202,8 +184,6 @@ namespace GTI
                 //Add the resources
                 GTIDebug.Log("MultiModeIntake: Add Resource\n" + IntakeResource.ToString(), iDebugLevel.DebugInfo);
                 currentPart.AddResource(IntakeResource);
-                //IntakeResource.ClearNodes();
-                //IntakeResource.ClearValues();
 
                 GTIDebug.Log("Listing resources defined in part", iDebugLevel.DebugInfo);
                 if(DebugLevel == iDebugLevel.DebugInfo)
