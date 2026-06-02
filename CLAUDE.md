@@ -16,6 +16,16 @@ the compiled `GTI_Utilities.dll` to GPLv3 for that component. See `LICENSE`.
 `GTI_SimpleKarbonite`). When working in GameData, `GTI*` folders are mine; other folders are
 third-party dependencies (ModuleManager, UmbraSpaceIndustries, SmokeScreen, etc.).
 
+## Build & deploy
+
+- Each plugin builds with `dotnet build -c Release` (this machine: .NET 8 SDK, no msbuild).
+- A post-build step copies the output DLL into the live install at
+  `T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins\`.
+- The copy **fails while KSP holds the DLL** (error: "open user-mapped section" / "a file with an
+  open user-mapped section") — close KSP before building.
+- **The user always triggers builds/recompiles themselves** (only they know if KSP is running).
+  Make the code edits and tell them when it's ready to compile; do not run the compiler.
+
 ## Documentation
 
 Per-mod reference docs live in this root folder (`GTI_*.md`, `GTIndustries.md`). Per-plugin

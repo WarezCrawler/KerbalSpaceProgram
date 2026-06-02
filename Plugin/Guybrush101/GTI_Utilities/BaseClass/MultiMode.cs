@@ -341,16 +341,33 @@ namespace GTI
         }
 
         // Convenience block for subclasses with no detailed GetInfo of their own (Converter/Harvester):
-        // lists every mode and its tech tag. Ensures settings are initialised so 'modes' is available.
+        // lists every mode and its tech tag.
+        //
+        // GetInfo() runs during part COMPILATION (PartLoader.CompilePartInfo), where some subclasses'
+        // initializeSettings() cannot run yet - e.g. GTI_MultiModeIntake calls part.GetPartModuleConfig(),
+        // which returns null that early and throws. A throw here aborts the CompileParts coroutine and
+        // hangs loading, so we build the mode list defensively: try to initialise, swallow any failure,
+        // and fall back to a header-only tooltip if the mode list is still unavailable.
         protected string BuildModesTechInfo(string header)
         {
             StringBuilder sb = new StringBuilder();
-            if (!_settingsInitialized) initializeSettings();
-
             sb.AppendLine("<color=yellow>" + header + "</color>");
 
+            if (modes == null)
+            {
+                try { if (!_settingsInitialized) initializeSettings(); }
+                catch (Exception e)
+                {
+                    GTIDebug.Log("BuildModesTechInfo: initializeSettings() unavailable during GetInfo (" + e.Message + ")", iDebugLevel.DebugInfo);
+                }
+            }
+
+            //Module-level tech gate reads straight from the cfg field, so it is always safe to show.
             string moduleTag = ModuleTechInfo();
             if (moduleTag != string.Empty) sb.AppendLine("<i>" + moduleTag + "</i>");
+
+            //If the mode list could not be built this early, return the header (+ module gate) only.
+            if (modes == null) return sb.ToString();
 
             for (int i = 0; i < modes.Count; i++)
             {
