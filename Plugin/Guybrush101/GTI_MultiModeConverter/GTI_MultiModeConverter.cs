@@ -143,7 +143,7 @@ namespace GTI
         {
             try
             {
-                return "GTI Multi Mode Converter";
+                return BuildModesTechInfo("GTI Multi Mode Converter");
             }
             catch (Exception e)
             {

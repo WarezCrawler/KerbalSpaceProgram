@@ -34,13 +34,50 @@ PartModule
 | `useModuleAnimationGroup` | false | Gate mode availability on a `ModuleAnimationGroup` deploy state |
 | `affectSymCounterpartsInFlight` | false | Sync symmetry counterparts when switching in flight |
 | `messagePosition` | "" | On-screen message placement |
+| `techRequired` | "" | Semicolon list of tech-node IDs, one per mode (parallel to mode order); blank entry = no tech. Gates which modes are selectable. Mode 0 is always available. |
+| `moduleTechRequired` | "" | Single tech-node ID gating the **whole** selector; until researched the mode menu is hidden entirely. |
+| `unlockedModes` | "" | **Persistent.** Per-part frozen snapshot of unlocked mode IDs (comma list). Saved with the vessel — do not set by hand. |
 | `ChooseOption` | — | `UI_ChooseOption` field holding the selected mode ID |
+
+### Tech-gated mode unlocking (shared, inherited by all subscribers)
+
+Modes can be locked behind tech-tree nodes via `techRequired` (per-mode) and/or `moduleTechRequired`
+(whole selector). Core rule: **a vessel already in flight keeps exactly the modes it launched with —
+researching new tech never changes it.** Only the editor (designing a fresh craft) and an in-flight
+EVA "service" action resync a part to the current tech tree.
+
+- **Editor** — the unlocked set is recomputed live from current tech every time the part loads.
+- **Flight load** — the persisted `unlockedModes` snapshot is trusted verbatim (the freeze). An empty
+  snapshot (legacy/spawned craft) is seeded once from live tech.
+- **EVA** — `EVAUpgradeModes()` resyncs that one part to current tech and rebuilds its menu.
+- Sandbox (no R&D instance): everything is unlocked automatically.
+- Locked modes stay in the `modes` list (indices/IDs stay stable for order-matched modules like RCS);
+  they are simply filtered out of the selector. Mode 0 (the part's original behaviour) is always
+  unlocked.
+
+Example (RCS with 4 modes — original always free, the rest tech-gated):
+```
+techRequired = ;advFlightControl;ionPropulsion;experimentalScience
+```
+
+Internals: `ParseTechRequired()`, `ComputeLiveUnlockedSet()`, `ApplyTechUnlocks()` (called in the
+init flow before `initializeGUI()`), `IsModeUnlocked(int)`, `ModuleTechLocked()`,
+`BuildVisibleOptions(...)`, `RefreshModeOptions()`, and `TechResearched(string)` (static helper).
+
+**Editor tooltips (`GetInfo`)** show each mode's tech requirement and a coloured researched/locked
+status. Helpers: `ModeTechInfo(int)` (per-mode tag), `ModuleTechInfo()` (module-level gate tag), and
+`BuildModesTechInfo(header)` (full mode listing + tags). The base `GetInfo()` uses
+`BuildModesTechInfo` by default (Intake and any future subclass); RCS/Engine/EngineFX override
+`GetInfo()` and call `ModeTechInfo`/`ModuleTechInfo` inline within their richer panels. Tags resolve
+the readable tech title via `ResearchAndDevelopment.GetTechnologyTitle`.
 
 ### Shared actions/events
 
-- `EVAChangeMode()` (KSPEvent) — change mode from EVA.
-- `MultiModeAction_1` … `MultiModeAction_12` — direct "set mode #N" actions.
-- `ActionNextMode()` / `ActionPreviousMode()` — cycle modes.
+- `EVAChangeMode()` (KSPEvent) — change mode from EVA (cycles only unlocked modes).
+- `EVAUpgradeModes()` (KSPEvent) — EVA "service / upgrade": resync this part to the current tech tree.
+  Only active when the part has tech gating **and** the game has R&D (career/science).
+- `MultiModeAction_1` … `MultiModeAction_12` — direct "set mode #N" actions (ignore locked modes).
+- `ActionNextMode()` / `ActionPreviousMode()` — cycle modes (skip locked modes).
 
 ### Key overridable members (for subclasses)
 

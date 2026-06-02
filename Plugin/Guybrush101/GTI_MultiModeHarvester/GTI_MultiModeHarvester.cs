@@ -163,7 +163,7 @@ namespace GTI
         {
             try
             {
-                return "GTI Multi Mode Harvester";
+                return BuildModesTechInfo("GTI Multi Mode Harvester");
             }
             catch (Exception e)
             {

@@ -685,6 +685,11 @@ namespace GTI
 
             //Build string
             Info.AppendLine("<color=yellow># Engine Modes Available: " + arrPropellantNames.Length + "</color>");
+
+            //Module-level tech gate (hides the whole selector until researched), if configured.
+            string moduleTag = ModuleTechInfo();
+            if (moduleTag != string.Empty) Info.AppendLine("<i>" + moduleTag + "</i>");
+
             for (int i = 0; i < arrPropellantNames.Length; i++)
             {
                 Info.Append("<b><color=yellow>Engine Mode: </color></b>");
@@ -723,6 +728,10 @@ namespace GTI
                     Info.Append(arrinfoatmosphereCurve_Atm[i]);
                     Info.AppendLine();
                 }
+
+                //Per-mode tech requirement (blank for always-available modes).
+                string tag = ModeTechInfo(i);
+                if (tag != string.Empty) { Info.Append("<i>" + tag + "</i>"); Info.AppendLine(); }
 
                 Info.AppendLine();
             }
