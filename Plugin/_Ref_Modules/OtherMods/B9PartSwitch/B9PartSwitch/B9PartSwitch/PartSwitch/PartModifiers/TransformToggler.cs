@@ -1,0 +1,96 @@
+using UnityEngine;
+
+namespace B9PartSwitch.PartSwitch.PartModifiers;
+
+public class TransformToggler : PartModifierBase
+{
+	private readonly Transform transform;
+
+	private readonly Part part;
+
+	public override string Description => "Transform " + transform.name + " enabled state";
+
+	public override bool ChangesGeometry => true;
+
+	public TransformToggler(Transform transform, Part part)
+	{
+		transform.ThrowIfNullArgument("transform");
+		part.ThrowIfNullArgument("part");
+		this.transform = transform;
+		this.part = part;
+	}
+
+	public override void DeactivateOnStartEditor()
+	{
+		Deactivate();
+	}
+
+	public override void DeactivateOnStartFlight()
+	{
+		Deactivate();
+	}
+
+	public override void ActivateOnStartEditor()
+	{
+		Activate();
+	}
+
+	public override void ActivateOnStartFlight()
+	{
+		Activate();
+	}
+
+	public override void DeactivateOnSwitchEditor()
+	{
+		Deactivate();
+	}
+
+	public override void DeactivateOnSwitchFlight()
+	{
+		Deactivate();
+	}
+
+	public override void ActivateOnSwitchEditor()
+	{
+		Activate();
+	}
+
+	public override void ActivateOnSwitchFlight()
+	{
+		Activate();
+	}
+
+	public override void OnIconCreateInactiveSubtype()
+	{
+		Deactivate();
+	}
+
+	public override void OnIconCreateActiveSubtype()
+	{
+		Activate();
+	}
+
+	public override void OnAfterReinitializeActiveSubtype()
+	{
+		Activate();
+	}
+
+	public override void OnAfterReinitializeInactiveSubtype()
+	{
+		Deactivate();
+	}
+
+	private void Activate()
+	{
+		part.UpdateTransformEnabled(transform);
+	}
+
+	private void Deactivate()
+	{
+		transform.Disable();
+		if (part.partRendererBoundsIgnore.Contains(transform.name))
+		{
+			part.partRendererBoundsIgnore.Add(transform.name);
+		}
+	}
+}

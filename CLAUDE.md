@@ -47,6 +47,22 @@ reference when coding mods:
 **Use this folder to look up KSP API signatures, types, and behavior when writing mod code.**
 Grep/search it directly rather than guessing at the API.
 
+### Decompiling other mods (third-party DLLs)
+
+When decompiling/extracting code from any **other mod's** DLL for reference, always save the
+output under:
+
+```
+Plugin/_Ref_Modules/OtherMods/<ModName>/<DllFileName>/
+```
+
+- `<ModName>` = the mod folder/name the DLL came from (e.g. `USITools`, `SmokeScreen`).
+- `<DllFileName>` = the DLL's name **without** the `.dll` extension (e.g. `USITools.dll`
+  → `USITools/`). This keeps multiple DLLs from the same mod cleanly separated.
+- Example: decompiling `USITools.dll` from the USI mod →
+  `Plugin/_Ref_Modules/OtherMods/USI/USITools/` (decompiled `.cs` tree below it).
+- Use the same `ilspycmd` invocation as below, pointing `-o` at that subfolder.
+
 ### How it was generated
 Decompiled with `ilspycmd` (ILSpy CLI). Notes for re-running:
 - Use `ilspycmd` **v8.2.0.7535** — newer versions target .NET 9, but this machine only
