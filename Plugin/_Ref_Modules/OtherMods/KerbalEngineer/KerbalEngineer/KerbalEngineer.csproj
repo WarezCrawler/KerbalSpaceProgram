@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KerbalEngineer</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <TargetFramework>net40</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>11.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="System.Core" />
+    <Reference Include="UnityEngine.CoreModule" />
+    <Reference Include="Assembly-CSharp" />
+    <Reference Include="UnityEngine.AssetBundleModule" />
+    <Reference Include="KerbalEngineer.Unity">
+      <HintPath>T:\Kerbal Space Program\KSP1.9.1\GameData\KerbalEngineer\KerbalEngineer.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule" />
+    <Reference Include="UnityEngine.IMGUIModule" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine.UI" />
+    <Reference Include="UnityEngine.PhysicsModule" />
+    <Reference Include="UnityEngine.UIModule" />
+    <Reference Include="UnityEngine.TextRenderingModule" />
+    <Reference Include="UnityEngine.InputLegacyModule" />
+  </ItemGroup>
+</Project>
