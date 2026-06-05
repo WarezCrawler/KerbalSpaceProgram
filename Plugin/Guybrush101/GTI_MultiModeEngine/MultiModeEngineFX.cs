@@ -308,7 +308,22 @@ namespace GTI
                 }
 
                 Info.AppendLine("<color=yellow>Engine Modes Available:</color>");
-                Info.AppendLine(GUIengineID);
+
+                // Module-level tech gate (hides the whole selector until researched), if configured.
+                string moduleTag = ModuleTechInfo();
+                if (moduleTag != string.Empty) Info.AppendLine("<i>" + moduleTag + "</i>");
+
+                for (int i = 0; i < modes.Count; i++)
+                {
+                    Info.Append(modes[i].Name);
+                    // Per-mode tech requirement (blank for always-available modes).
+                    string tag = ModeTechInfo(i);
+                    if (tag != string.Empty) { Info.AppendLine(); Info.Append("  <i>" + tag + "</i>"); }
+                    // Per-mode obsolete tech (blank unless an upgrade tech retires this mode).
+                    string obsoleteTag = ModeObsoleteInfo(i);
+                    if (obsoleteTag != string.Empty) { Info.AppendLine(); Info.Append("  <i>" + obsoleteTag + "</i>"); }
+                    Info.AppendLine();
+                }
                 Info.AppendLine("\nIn Flight switching is <color=yellow>" + (availableInFlight ? "available" : "not available") + "</color>");
 
                 return Info.ToString();

@@ -43,6 +43,15 @@ MODULE
 {
     name = GTI_MultiModeHarvester
     availableInFlight = true
+
+    // --- Tech gating (optional; semicolon list parallel to the harvester MODULE order) ---
+    techRequired = ;advExploration     // unlock per mode; blank = always available (mode 0 always free)
+    techObsolete = ;                   // retire per mode once researched; blank = never removed
+    // moduleTechRequired = ...         // hides the whole selector until researched
+
     // ... one ModuleResourceHarvester MODULE per mode declared on the part
 }
 ```
+
+See the tech-gating section in [GTI_Utilities.md](GTI_Utilities.md) for the freeze rules and the
+"upgrade" (`techObsolete`) pattern.

@@ -114,10 +114,19 @@ namespace GTI
         protected override void initializeSettings()
         {
             GTIDebug.Log("GTI_MultiModeIntake --> initializeSettings()", iDebugLevel.DebugInfo);
-            GTIDebug.Log(part.GetPartModuleConfig("MODULE", "name", "GTI_MultiModeIntake").ToString(), iDebugLevel.DebugInfo);
 
-            ConfigNode[] ResourceNodes = part.GetPartModuleConfigs("RESOURCE");
-            GTIDebug.Log(ResourceNodes.ToStringExt(), iDebugLevel.DebugInfo);
+            // part.GetPartModuleConfig()/GetPartModuleConfigs() return null during part COMPILATION
+            // (the base GetInfo() runs initializeSettings that early), and KSP logs an "[ERR] GetPartConfig:
+            // PART NOT FOUND" for every such call. These two reads are debug-logging only - nothing here is
+            // functional - so skip them entirely while the game is still loading to avoid the null + log spam.
+            if (HighLogic.LoadedScene != GameScenes.LOADING)
+            {
+                ConfigNode thisModuleConfig = part.GetPartModuleConfig("MODULE", "name", "GTI_MultiModeIntake");
+                if (thisModuleConfig != null) GTIDebug.Log(thisModuleConfig.ToString(), iDebugLevel.DebugInfo);
+
+                ConfigNode[] ResourceNodes = part.GetPartModuleConfigs("RESOURCE");
+                if (ResourceNodes != null) GTIDebug.Log(ResourceNodes.ToStringExt(), iDebugLevel.DebugInfo);
+            }
 
             //Find resourceIntake modules
             ModuleIntakes = part.FindModulesImplementing<ModuleResourceIntake>();

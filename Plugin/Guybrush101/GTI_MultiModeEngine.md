@@ -78,9 +78,28 @@ MODULE
     GUIengineID = Air-Breathing;Closed Cycle
     engineID_onFlameout = closedCycle;closedCycle   // optional: air-breathing falls back to closed-cycle
     availableInFlight = true
+
+    // --- Tech gating (optional; semicolon list parallel to engineID) ---
+    techRequired = ;advAerodynamics    // unlock per mode; blank = always available (mode 0 always free)
+    techObsolete = ;                   // retire per mode once researched; blank = never removed
+    // moduleTechRequired = aerospaceTech   // hides the whole selector until researched
+
     // ... one ModuleEnginesFX MODULE per engineID listed above
 }
 ```
+
+**Engine "upgrade" pattern** — a basic engine mode is *replaced* by a better one once the upgrade
+tech is researched (the new mode unlocks, the old mode 0 is retired). At build time, or after an EVA
+"service / upgrade", the part stops offering the basic mode and switches to the advanced one:
+```
+engineID     = basic;advanced
+GUIengineID  = Basic;Advanced
+techRequired = ;heavyRocketry      // 'advanced' unlocks with Heavy Rocketry
+techObsolete = heavyRocketry;      // 'basic' (mode 0) is removed once Heavy Rocketry is researched
+//             ^basic retired      ^advanced never retired
+```
+A vessel already in flight keeps the mode it launched with until a Kerbal services the part on EVA —
+see the tech-gating section in [GTI_Utilities.md](GTI_Utilities.md).
 
 Used in GTIndustries by the CR-13 R.A.P.T.O.R. and NRX "KINKI" engines.
 
@@ -136,6 +155,11 @@ MODULE
     name = GTI_MultiModeRCS
     GUIRCSID = Monoprop;Cold Gas
     availableInFlight = true
+
+    // --- Tech gating (optional; semicolon list parallel to the ModuleRCS order) ---
+    techRequired = ;advFlightControl   // unlock per mode; blank = always available (mode 0 always free)
+    techObsolete = ;                   // retire per mode once researched; blank = never removed
+
     // ... one ModuleRCS MODULE per mode declared on the part, in matching order
 }
 ```

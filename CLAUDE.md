@@ -16,6 +16,16 @@ the compiled `GTI_Utilities.dll` to GPLv3 for that component. See `LICENSE`.
 `GTI_SimpleKarbonite`). When working in GameData, `GTI*` folders are mine; other folders are
 third-party dependencies (ModuleManager, UmbraSpaceIndustries, SmokeScreen, etc.).
 
+## Build & deploy
+
+- Each plugin builds with `dotnet build -c Release` (this machine: .NET 8 SDK, no msbuild).
+- A post-build step copies the output DLL into the live install at
+  `T:\Kerbal Space Program\KSP1.9.1\GameData\GTI_Utilities\Plugins\`.
+- The copy **fails while KSP holds the DLL** (error: "open user-mapped section" / "a file with an
+  open user-mapped section") — close KSP before building.
+- **The user always triggers builds/recompiles themselves** (only they know if KSP is running).
+  Make the code edits and tell them when it's ready to compile; do not run the compiler.
+
 ## Documentation
 
 Per-mod reference docs live in this root folder (`GTI_*.md`, `GTIndustries.md`). Per-plugin
@@ -36,6 +46,22 @@ reference when coding mods:
 
 **Use this folder to look up KSP API signatures, types, and behavior when writing mod code.**
 Grep/search it directly rather than guessing at the API.
+
+### Decompiling other mods (third-party DLLs)
+
+When decompiling/extracting code from any **other mod's** DLL for reference, always save the
+output under:
+
+```
+Plugin/_Ref_Modules/OtherMods/<ModName>/<DllFileName>/
+```
+
+- `<ModName>` = the mod folder/name the DLL came from (e.g. `USITools`, `SmokeScreen`).
+- `<DllFileName>` = the DLL's name **without** the `.dll` extension (e.g. `USITools.dll`
+  → `USITools/`). This keeps multiple DLLs from the same mod cleanly separated.
+- Example: decompiling `USITools.dll` from the USI mod →
+  `Plugin/_Ref_Modules/OtherMods/USI/USITools/` (decompiled `.cs` tree below it).
+- Use the same `ilspycmd` invocation as below, pointing `-o` at that subfolder.
 
 ### How it was generated
 Decompiled with `ilspycmd` (ILSpy CLI). Notes for re-running:

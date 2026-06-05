@@ -98,6 +98,14 @@ MODULE
     availableInFlight = true
     autoManage = true          // arm auto open/close by default (optional)
     // autoCloseThreshold = 0.05   // raise to close earlier in thin air (cuts drag)
+
+    // --- Tech gating (optional; semicolon list parallel to the intake MODULE order) ---
+    // techRequired = ;advExploration   // unlock per mode; blank = always available (mode 0 always free)
+    // techObsolete = ;                 // retire per mode once researched; blank = never removed
+
     // ... one ModuleResourceIntake MODULE per intake mode declared on the part
 }
 ```
+
+Tech gating is shared by all MultiMode modules — see the tech-gating section in
+[GTI_Utilities.md](GTI_Utilities.md) for the freeze rules and the "upgrade" (`techObsolete`) pattern.

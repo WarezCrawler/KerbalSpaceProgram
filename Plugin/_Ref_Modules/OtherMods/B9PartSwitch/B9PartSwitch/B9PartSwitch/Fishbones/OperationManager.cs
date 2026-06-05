@@ -1,0 +1,37 @@
+using B9PartSwitch.Fishbones.Context;
+using B9PartSwitch.Fishbones.NodeDataMappers;
+
+namespace B9PartSwitch.Fishbones;
+
+public class OperationManager : IOperaitonManager
+{
+	public readonly INodeDataMapper parseMapper;
+
+	public readonly INodeDataMapper loadSaveMapper;
+
+	public readonly INodeDataMapper serializeMapper;
+
+	public OperationManager(INodeDataMapper parseMapper, INodeDataMapper loadSaveMapper, INodeDataMapper serializeMapper)
+	{
+		this.parseMapper = parseMapper;
+		this.loadSaveMapper = loadSaveMapper;
+		this.serializeMapper = serializeMapper;
+	}
+
+	public INodeDataMapper MapperFor(Operation op)
+	{
+		if (op == Operation.LoadPrefab)
+		{
+			return parseMapper;
+		}
+		if (op == Operation.LoadInstance || op == Operation.Save)
+		{
+			return loadSaveMapper;
+		}
+		if (op == Operation.Deserialize || op == Operation.Serialize)
+		{
+			return serializeMapper;
+		}
+		return null;
+	}
+}

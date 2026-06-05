@@ -44,6 +44,15 @@ MODULE
     name = GTI_MultiModeConverter
     availableInFlight = true
     availableInEditor = true
+
+    // --- Tech gating (optional; semicolon list parallel to the converter MODULE order) ---
+    techRequired = ;advConstruction    // unlock per mode; blank = always available (mode 0 always free)
+    techObsolete = ;                   // retire per mode once researched; blank = never removed
+    // moduleTechRequired = ...         // hides the whole selector until researched
+
     // ... one ModuleResourceConverter MODULE per mode declared on the part
 }
 ```
+
+See the tech-gating section in [GTI_Utilities.md](GTI_Utilities.md) for the freeze rules and the
+"upgrade" (`techObsolete`) pattern.
