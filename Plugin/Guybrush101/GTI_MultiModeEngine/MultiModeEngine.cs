@@ -733,6 +733,10 @@ namespace GTI
                 string tag = ModeTechInfo(i);
                 if (tag != string.Empty) { Info.Append("<i>" + tag + "</i>"); Info.AppendLine(); }
 
+                //Per-mode obsolete tech (blank unless an upgrade tech retires this mode).
+                string obsoleteTag = ModeObsoleteInfo(i);
+                if (obsoleteTag != string.Empty) { Info.Append("<i>" + obsoleteTag + "</i>"); Info.AppendLine(); }
+
                 Info.AppendLine();
             }
 

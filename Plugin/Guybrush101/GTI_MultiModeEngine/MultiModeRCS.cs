@@ -232,6 +232,9 @@ namespace GTI
                     // Per-mode tech requirement (blank for always-available modes such as the original).
                     string tag = ModeTechInfo(i);
                     if (tag != string.Empty) { Info.AppendLine(); Info.Append("  <i>" + tag + "</i>"); }
+                    // Per-mode obsolete tech (blank unless an upgrade tech retires this mode).
+                    string obsoleteTag = ModeObsoleteInfo(i);
+                    if (obsoleteTag != string.Empty) { Info.AppendLine(); Info.Append("  <i>" + obsoleteTag + "</i>"); }
                     Info.AppendLine();
                 }
                 Info.AppendLine("\nIn Flight switching is <color=yellow>" + (availableInFlight ? "available" : "not available") + "</color>");

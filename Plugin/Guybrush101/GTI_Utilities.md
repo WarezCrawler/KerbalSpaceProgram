@@ -34,42 +34,57 @@ PartModule
 | `useModuleAnimationGroup` | false | Gate mode availability on a `ModuleAnimationGroup` deploy state |
 | `affectSymCounterpartsInFlight` | false | Sync symmetry counterparts when switching in flight |
 | `messagePosition` | "" | On-screen message placement |
-| `techRequired` | "" | Semicolon list of tech-node IDs, one per mode (parallel to mode order); blank entry = no tech. Gates which modes are selectable. Mode 0 is always available. |
+| `techRequired` | "" | Semicolon list of tech-node IDs, one per mode (parallel to mode order); blank entry = no tech. Gates which modes are selectable. Mode 0 is always unlocked. |
+| `techObsolete` | "" | Semicolon list of tech-node IDs, one per mode (the **inverse** of `techRequired`): once researched the mode is **removed** from the selector. Blank entry = never removed. Applies to mode 0 too — use it for "upgrade" behaviour (a basic mode retired when a better one unlocks). |
 | `moduleTechRequired` | "" | Single tech-node ID gating the **whole** selector; until researched the mode menu is hidden entirely. |
-| `unlockedModes` | "" | **Persistent.** Per-part frozen snapshot of unlocked mode IDs (comma list). Saved with the vessel — do not set by hand. |
+| `unlockedModes` | "" | **Persistent.** Per-part frozen snapshot of available mode IDs (comma list). Saved with the vessel — do not set by hand. |
 | `ChooseOption` | — | `UI_ChooseOption` field holding the selected mode ID |
 
 ### Tech-gated mode unlocking (shared, inherited by all subscribers)
 
-Modes can be locked behind tech-tree nodes via `techRequired` (per-mode) and/or `moduleTechRequired`
-(whole selector). Core rule: **a vessel already in flight keeps exactly the modes it launched with —
-researching new tech never changes it.** Only the editor (designing a fresh craft) and an in-flight
-EVA "service" action resync a part to the current tech tree.
+Modes can be locked behind tech-tree nodes via `techRequired` (per-mode unlock) and/or
+`moduleTechRequired` (whole selector), and **retired** by `techObsolete` (per-mode upgrade). A mode is
+offered iff it is **unlocked AND not yet obsoleted**. Core rule: **a vessel already in flight keeps
+exactly the modes it launched with — researching new tech never changes it.** Only the editor
+(designing a fresh craft) and an in-flight EVA "service" action resync a part to the current tech tree.
 
-- **Editor** — the unlocked set is recomputed live from current tech every time the part loads.
+- **Editor** — the available set is recomputed live from current tech every time the part loads.
 - **Flight load** — the persisted `unlockedModes` snapshot is trusted verbatim (the freeze). An empty
   snapshot (legacy/spawned craft) is seeded once from live tech.
-- **EVA** — `EVAUpgradeModes()` resyncs that one part to current tech and rebuilds its menu.
+- **EVA** — `EVAUpgradeModes()` resyncs that one part to current tech and rebuilds its menu. If the
+  service removed the mode currently in use (an upgrade tech obsoleted it), the part switches to the
+  first still-available mode immediately.
 - Sandbox (no R&D instance): everything is unlocked automatically.
-- Locked modes stay in the `modes` list (indices/IDs stay stable for order-matched modules like RCS);
-  they are simply filtered out of the selector. Mode 0 (the part's original behaviour) is always
-  unlocked.
+- Locked/obsoleted modes stay in the `modes` list (indices/IDs stay stable for order-matched modules
+  like RCS); they are simply filtered out of the selector. Mode 0 (the part's original behaviour) is
+  always *unlocked*, but it **can** be obsoleted by a `techObsolete` entry.
+- At scene load `selModeFromChooseOption()` resolves the selection to the first available mode whenever
+  the persisted choice is missing, locked, or obsoleted — a part never boots sitting on an unavailable
+  mode (`FirstAvailableMode()`, falls back to mode 0 only if a config error leaves nothing available).
 
 Example (RCS with 4 modes — original always free, the rest tech-gated):
 ```
 techRequired = ;advFlightControl;ionPropulsion;experimentalScience
 ```
 
-Internals: `ParseTechRequired()`, `ComputeLiveUnlockedSet()`, `ApplyTechUnlocks()` (called in the
-init flow before `initializeGUI()`), `IsModeUnlocked(int)`, `ModuleTechLocked()`,
-`BuildVisibleOptions(...)`, `RefreshModeOptions()`, and `TechResearched(string)` (static helper).
+Example (engine "upgrade" — the basic mode 0 is retired once Heavy Rocketry unlocks mode 1):
+```
+techRequired = ;heavyRocketry
+techObsolete = heavyRocketry;
+```
 
-**Editor tooltips (`GetInfo`)** show each mode's tech requirement and a coloured researched/locked
-status. Helpers: `ModeTechInfo(int)` (per-mode tag), `ModuleTechInfo()` (module-level gate tag), and
+Internals: `ParseTechRequired()`, `ModeAvailableLive(int)`, `ComputeLiveUnlockedSet()`,
+`ApplyTechUnlocks()` (called in the init flow before `initializeGUI()`), `IsModeUnlocked(int)`,
+`FirstAvailableMode()`, `ModuleTechLocked()`, `BuildVisibleOptions(...)`, `RefreshModeOptions()`, and
+`TechResearched(string)` (static helper).
+
+**Editor tooltips (`GetInfo`)** show each mode's tech requirement / removal tech and a coloured
+researched/locked status. Helpers: `ModeTechInfo(int)` (per-mode "Requires" tag), `ModeObsoleteInfo(int)`
+(per-mode "Removed by" tag), `ModuleTechInfo()` (module-level gate tag), and
 `BuildModesTechInfo(header)` (full mode listing + tags). The base `GetInfo()` uses
 `BuildModesTechInfo` by default (Intake and any future subclass); RCS/Engine/EngineFX override
-`GetInfo()` and call `ModeTechInfo`/`ModuleTechInfo` inline within their richer panels. Tags resolve
-the readable tech title via `ResearchAndDevelopment.GetTechnologyTitle`.
+`GetInfo()` and call `ModeTechInfo`/`ModeObsoleteInfo`/`ModuleTechInfo` inline within their richer
+panels. Tags resolve the readable tech title via `ResearchAndDevelopment.GetTechnologyTitle`.
 
 ### Shared actions/events
 

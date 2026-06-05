@@ -61,9 +61,19 @@ namespace GTI
         #region Tech gating fields
         // Semicolon-separated list of tech-node IDs, one per mode (parallel to mode order). A blank
         // entry means that mode needs no tech. Mode 0 (the part's original behaviour) is ALWAYS
-        // available regardless of this list.
+        // unlocked regardless of this list.
         [KSPField]
         public string techRequired = string.Empty;
+
+        // Semicolon-separated list of tech-node IDs, one per mode (parallel to mode order). The INVERSE
+        // of techRequired: once the listed tech is researched the mode is REMOVED (obsoleted) from the
+        // selector - use it for "upgrade" behaviour where a basic mode is retired when a better one is
+        // unlocked. A blank entry means the mode is never removed. This applies to mode 0 as well, so an
+        // always-unlocked original behaviour can still be retired by an upgrade tech. Like techRequired,
+        // the change only takes effect at editor build time or via the EVA service action - a flying
+        // vessel keeps the modes it launched with until a Kerbal services it.
+        [KSPField]
+        public string techObsolete = string.Empty;
 
         // A single tech-node ID that gates the WHOLE selector; until it is researched the mode menu
         // is hidden entirely ("unlock the configuration" flavour).
@@ -75,8 +85,10 @@ namespace GTI
         [KSPField(isPersistant = true)]
         public string unlockedModes = string.Empty;
 
-        // Runtime: parsed tech requirement per mode index, and the resulting unlocked flag per index.
+        // Runtime: parsed unlock + obsolete tech per mode index, and the resulting available flag per
+        // index (modeUnlocked[i] == "this mode is offered on this part instance").
         protected string[] modeTech;
+        protected string[] modeTechObsolete;
         protected bool[] modeUnlocked;
         #endregion
 
@@ -99,7 +111,7 @@ namespace GTI
 
             //Show the EVA "service / upgrade" button only when this part actually has tech-gated modes
             //AND the game has an R&D system (career/science). In sandbox everything is unlocked already.
-            bool hasTechGating = !(string.IsNullOrEmpty(techRequired) && string.IsNullOrEmpty(moduleTechRequired));
+            bool hasTechGating = !(string.IsNullOrEmpty(techRequired) && string.IsNullOrEmpty(techObsolete) && string.IsNullOrEmpty(moduleTechRequired));
             bool techGameMode = ResearchAndDevelopment.Instance != null;
             this.Events[nameof(EVAUpgradeModes)].active = hasTechGating && techGameMode;
         }
@@ -157,10 +169,15 @@ namespace GTI
         // ---------------------------------------------------------------------------------------------
         //  Tech-gated modes (inherited by every GTI_MultiMode subscriber).
         //
-        //  Driven by two optional cfg fields:
+        //  Driven by three optional cfg fields:
         //    techRequired       - semicolon list of tech-node IDs, one per mode (parallel to mode order).
         //                         A blank entry = no tech needed. Mode 0 (the part's original behaviour)
-        //                         is ALWAYS available regardless of this list.
+        //                         is ALWAYS unlocked regardless of this list.
+        //    techObsolete       - semicolon list of tech-node IDs, one per mode (the INVERSE of the
+        //                         above): once researched the mode is REMOVED from the selector. A blank
+        //                         entry = never removed. Applies to mode 0 too (an upgrade can retire the
+        //                         original behaviour). A mode is offered only when it is unlocked AND not
+        //                         yet obsoleted.
         //    moduleTechRequired - a single tech-node ID gating the WHOLE selector; until researched the
         //                         mode menu is hidden entirely.
         //
@@ -171,15 +188,31 @@ namespace GTI
         //  from live tech in those two situations.
         // ---------------------------------------------------------------------------------------------
 
-        // Parse techRequired into one entry per mode (idempotent; safe to call repeatedly).
+        // Parse techRequired + techObsolete into one entry per mode (idempotent; safe to call repeatedly).
         protected void ParseTechRequired()
         {
             if (modeTech != null && modeTech.Length == modes.Count) return;
 
             ArraySplitEvaluate(techRequired, out string[] arr, ';');
+            ArraySplitEvaluate(techObsolete, out string[] arrObsolete, ';');
             modeTech = new string[modes.Count];
+            modeTechObsolete = new string[modes.Count];
             for (int i = 0; i < modes.Count; i++)
+            {
                 modeTech[i] = (arr.Length > i) ? arr[i].Trim() : string.Empty;
+                modeTechObsolete[i] = (arrObsolete.Length > i) ? arrObsolete[i].Trim() : string.Empty;
+            }
+        }
+
+        // Is a mode available against the LIVE tech tree right now? A mode is available when its unlock
+        // requirement is met (mode 0 / a blank entry is always unlocked) AND it has not been obsoleted by
+        // a researched techObsolete entry. This is the single rule used to (re)build the frozen snapshot.
+        protected bool ModeAvailableLive(int i)
+        {
+            ParseTechRequired();
+            bool unlocked = (i == 0) || TechResearched(modeTech[i]);
+            bool obsoleted = !string.IsNullOrEmpty(modeTechObsolete[i]) && TechResearched(modeTechObsolete[i]);
+            return unlocked && !obsoleted;
         }
 
         // Is a tech node researched? Empty id = yes. In a game without R&D (sandbox) KSP's
@@ -190,14 +223,15 @@ namespace GTI
             return ResearchAndDevelopment.GetTechnologyState(techID) == RDTech.State.Available;
         }
 
-        // Comma-separated list of mode IDs whose tech is researched right now. Mode 0 is always included.
+        // Comma-separated list of mode IDs that are available against the live tech tree right now
+        // (unlocked AND not obsoleted). Mode 0 is included unless an upgrade tech has obsoleted it.
         protected string ComputeLiveUnlockedSet()
         {
             ParseTechRequired();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < modes.Count; i++)
             {
-                if (i == 0 || TechResearched(modeTech[i]))
+                if (ModeAvailableLive(i))
                 {
                     if (sb.Length > 0) sb.Append(',');
                     sb.Append(modes[i].ID);
@@ -229,9 +263,11 @@ namespace GTI
             HashSet<string> allowed = new HashSet<string>(unlockedModes.Split(','));
             for (int i = 0; i < modes.Count; i++)
             {
-                //Mode 0 (original behaviour) and any mode without a tech requirement are always unlocked;
-                //the rest must appear in this part's frozen snapshot.
-                modeUnlocked[i] = (i == 0) || string.IsNullOrEmpty(modeTech[i]) || allowed.Contains(modes[i].ID);
+                //A mode is offered iff it appears in this part's frozen snapshot. The snapshot was built
+                //by ComputeLiveUnlockedSet, which already applied BOTH rules (unlock + obsolete), so we
+                //must NOT re-add mode 0 / no-tech modes here - doing so would resurrect a mode the upgrade
+                //(techObsolete) was supposed to remove.
+                modeUnlocked[i] = allowed.Contains(modes[i].ID);
             }
         }
 
@@ -239,6 +275,15 @@ namespace GTI
         {
             if (modeUnlocked == null || index < 0 || index >= modeUnlocked.Length) return true;
             return modeUnlocked[index];
+        }
+
+        // Index of the first mode offered on this part (unlocked and not obsoleted). Falls back to 0 if -
+        // through a config error - nothing is available, so the part is never left without a selection.
+        protected int FirstAvailableMode()
+        {
+            for (int i = 0; i < modes.Count; i++)
+                if (IsModeUnlocked(i)) return i;
+            return 0;
         }
 
         // True when a module-level tech gate has not been researched (hides the whole selector).
@@ -288,7 +333,8 @@ namespace GTI
         }
 
         // EVA "service" action: a Kerbal physically resyncs this part to the current tech tree. This is
-        // the ONLY way a flying vessel gains modes that were unlocked after it launched.
+        // the ONLY way a flying vessel gains modes unlocked after it launched - or loses modes an upgrade
+        // tech (techObsolete) has since retired.
         [KSPEvent(name = "EVAUpgradeModes", guiName = "Service / upgrade modes", active = false,
                   externalToEVAOnly = true, guiActiveUnfocused = true, unfocusedRange = 5f,
                   guiActive = false, guiActiveEditor = false)]
@@ -297,13 +343,24 @@ namespace GTI
             string before = unlockedModes;
             unlockedModes = ComputeLiveUnlockedSet();   //resync this part to current tech
             ApplyTechUnlocks();                          //recompute modeUnlocked from the new snapshot
+
+            //The service may have REMOVED the mode currently in use (an upgrade tech obsoleted it). Move
+            //to the first still-available mode and apply it before refreshing the menu, so the part never
+            //keeps running a mode that is no longer offered.
+            if (!IsModeUnlocked(selectedMode))
+            {
+                selectedMode = FirstAvailableMode();
+                ChooseOption = modes[selectedMode].ID;
+                InvokeOnUpdateMultiMode(silentUpdate: false);
+            }
+
             RefreshModeOptions();                        //rebuild the selector + right-click menu
 
             string pos = (messagePosition == string.Empty) ? "UPPER_CENTER" : messagePosition;
             if (unlockedModes != before)
-                writeScreenMessage("New modes unlocked on " + part.partInfo.title, 4f, pos);
+                writeScreenMessage("Modes updated on " + part.partInfo.title, 4f, pos);
             else
-                writeScreenMessage("No new modes available", 3f, pos);
+                writeScreenMessage("No mode changes available", 3f, pos);
         }
 
         // ---- GetInfo() helpers (editor tooltip) -----------------------------------------------------
@@ -319,6 +376,17 @@ namespace GTI
             string tech = arr[modeIndex].Trim();
             if (string.IsNullOrEmpty(tech)) return string.Empty;
             return TechTag("Requires", tech);
+        }
+
+        // Obsolete tag for a single mode index, e.g. "Removed by tech: Heavy Rocketry (locked)". Returns
+        // string.Empty when that mode has no obsolete requirement.
+        protected string ModeObsoleteInfo(int modeIndex)
+        {
+            ArraySplitEvaluate(techObsolete, out string[] arr, ';');
+            if (modeIndex < 0 || modeIndex >= arr.Length) return string.Empty;
+            string tech = arr[modeIndex].Trim();
+            if (string.IsNullOrEmpty(tech)) return string.Empty;
+            return TechTag("Removed by", tech);
         }
 
         // Module-level tech tag (the gate that hides the whole selector). Empty when none configured.
@@ -374,6 +442,8 @@ namespace GTI
                 sb.Append("• ").Append(modes[i].Name);
                 string tag = ModeTechInfo(i);
                 if (tag != string.Empty) sb.Append("  <i>").Append(tag).Append("</i>");
+                string obsoleteTag = ModeObsoleteInfo(i);
+                if (obsoleteTag != string.Empty) sb.Append("  <i>").Append(obsoleteTag).Append("</i>");
                 sb.AppendLine();
             }
 
@@ -544,8 +614,8 @@ namespace GTI
             if (ChooseOption == string.Empty)
             {
                 GTIDebug.Log("selModeFromChooseOption() --> ChooseOption == string.Empty", iDebugLevel.DebugInfo);
-                ChooseOption = modes[0].ID;
-                selectedMode = 0;
+                selectedMode = FirstAvailableMode();
+                ChooseOption = modes[selectedMode].ID;
                 return;
             }
             else
@@ -554,9 +624,9 @@ namespace GTI
                 {
                     if (ChooseOption == modes[i].ID)
                     {
-                        //A persisted selection pointing at a locked mode falls through to the default
-                        //below (mode 0 is always unlocked), so a part can never boot up sitting on a
-                        //mode the player is not allowed to use.
+                        //A persisted selection pointing at a mode that is locked OR has been obsoleted by
+                        //an upgrade falls through to the default below (the first available mode), so a
+                        //part can never boot up sitting on a mode the player is not allowed to use.
                         if (!IsModeUnlocked(i)) break;
 
                         GTIDebug.Log("selModeFromChooseOption() --> ChooseOption == mode[i].ID", iDebugLevel.DebugInfo);
@@ -564,10 +634,10 @@ namespace GTI
                         return;
                     }
                 }
-                //If mode not found, revert to first setting
+                //If mode not found or no longer available, revert to the first available mode.
                 GTIDebug.Log("selModeFromChooseOption() --> Default", iDebugLevel.DebugInfo);
-                ChooseOption = modes[0].ID;
-                selectedMode = 0;
+                selectedMode = FirstAvailableMode();
+                ChooseOption = modes[selectedMode].ID;
             }
         }
 
