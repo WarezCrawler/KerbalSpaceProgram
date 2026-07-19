@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Test-Path \"O:\\\\Mod Development\\\\KerbalSpaceProgram\\\\Plugin\\\\_Ref_Modules\\\\KSP_Current_DLL\\\\Assembly-CSharp.Cleaned2.dll\"; \\(Get-Command ilspycmd -ErrorAction SilentlyContinue\\).Source; \\(Get-Command dotnet -ErrorAction SilentlyContinue\\).Source; dotnet tool list --global 2>$null)",
+      "PowerShell(Get-ChildItem -Path \"O:\\\\Mod Development\\\\KerbalSpaceProgram\\\\Plugin\\\\Guybrush101\" -File | Select-Object Name, @{Name='Size';Expression={$_.Length}})",
+      "Bash(Get-Content \"O:\\\\Mod Development\\\\KerbalSpaceProgram\\\\Plugin\\\\Guybrush101\\\\GTI_MultiModeConverter\\\\Properties\\\\AssemblyInfo.cs\")",
+      "Bash(Select-Object -First 20)",
+      "Bash(file GTI_Utilities/Patches/GTI_MultiModeConverter__MM.cfg)",
+      "Bash(grep -rlE '^[[:space:]]*[@%!+$-][A-Za-z@]|:NEEDS|:FOR\\\\[|:AFTER\\\\[|:BEFORE\\\\[|:HAS\\\\[' --include=*.cfg GTI_SimpleEPL GTI_SimpleKarbonite GTI_Utilities GTIndustries)",
+      "Bash(grep -rn -i \"SCANtype\" .)",
+      "Bash(ls Resources)",
+      "Bash(grep -rln -i \"SCANSAT_SENSOR\" .)",
+      "Read(//tmp/**)",
+      "Bash(sed -n '780,860p' full/ModuleManager/MMPatchLoader.cs)",
+      "Bash(export LC_ALL=C.UTF-8)",
+      "Bash(grep -A 40 'Data Nodes:' 'T:\\\\Kerbal Space Program\\\\KSP1.9.1\\\\GameData\\\\ContractConfigurator\\\\log\\\\KerbalAcademy\\\\__TRACKED_VAR__.log')",
+      "Bash(command -v python)",
+      "Bash(command -v py)",
+      "Read(//usr/**)",
+      "Bash(where python *)",
+      "Bash(awk '/MODULE/{m=1} /name = \\(MultiModeEngine|ModuleEnginesFX|GTI_MultiModeEngineFX\\)/{print \"MOD:\",$0} /engineID/{print \"  \",$0} /primaryEngineID|secondaryEngineID/{print \"  \",$0} /maxThrust/{print \"  \",$0} /useVelCurve/{print \"  \",$0} /velCurve/{print \"  >>velCurve\"}' \"GTIndustries/Parts/Engines/Raptor/raptorEngine.cfg\")",
+      "Bash(awk '/title/{print \"title:\",$0} /engineID|primaryEngineID|secondaryEngineID/{print $0} /maxThrust/{print $0} /useVelCurve/{print $0} /velCurve/{v=1} v{print} v&&/}/{v=0;print\"----\"}' Solaris_Hypernautics/Parts/Engine/__TRACKED_VAR__/part.cfg)",
+      "Bash(ls *.sln)",
+      "Bash(stat -c '%y %n' \"Guybrush101/Guybrush101.csproj\" \"Guybrush101/Core/EngineClassSwitch.cs\")",
+      "Bash(stat -c '%y  %s  %n' \\\\ *)",
+      "Bash(echo \"=== size ===\")",
+      "Bash(wc -l 'T:/Kerbal Space Program/KSP1.9.1/KSP.log')",
+      "Bash(echo \"=== GTI lines with error/exception/warn/null ===\")",
+      "Bash(grep -niE 'GTI|Guybrush' 'T:/Kerbal Space Program/KSP1.9.1/KSP.log')"
+    ]
+  }
+}
